@@ -1,4 +1,8 @@
 import express from "express"
+import fileupload from "express-fileupload"
+import morgan from "morgan"
+import { accessLoggerConfig, errorLoggerConfig, customTokenConfig } from "./api/config/Logger"
+import fs from "fs"
 //import routers
 
 //user router
@@ -26,10 +30,24 @@ import createSessionConfig from "./api/config/SessionConfig"
 const MySQLStore = require("express-mysql-session")(session)
 import { bUserAuthenticated } from "./api/auth/buser/middleware"
 import { userAuthenticated } from "./api/auth/user/middleware"
-import fileupload from "express-fileupload"
 import { checkGotStoreAuthorization, checkGotUserAuthorization } from "./api/auth/kiosk/middleware"
 
 export const app = express()
+
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+
+morgan.token("session", customTokenConfig)
+
+app.use(morgan(
+    accessLoggerConfig.format,
+    accessLoggerConfig.options,
+));
+
+app.use(morgan(
+    errorLoggerConfig.format,
+    errorLoggerConfig.options
+))
+
 
 //set port number
 app.set("port", process.env.PORT || 80)
