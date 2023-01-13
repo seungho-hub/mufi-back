@@ -5,11 +5,10 @@
 
 ### 0. create dotenv file
     
-.env.example 파일을 참고해 .env 파일을 생성해주세요
+.env.example 파일을 참고해 .env 파일을 생성해주세요 (aws secure manager sdk로 변경될 예정입니다.)
     
     
 ### 1. install dependencies
-
 
     yarn install
 
@@ -39,7 +38,6 @@
 src 디렉터리 하위 파일이 변경될때마다 서버를 재실행합니다.
 
     yarn run watch
-
 
 ## test
 
