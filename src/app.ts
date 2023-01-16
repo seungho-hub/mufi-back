@@ -56,10 +56,10 @@ app.set("port", process.env.PORT || 80)
 app.set("view engine", "ejs");
 
 //set views folder for view engine
-app.set("views", path.join(__dirname, "../views", "templates"))
+app.set("views", path.join(process.cwd(), "views", "templates"))
 
 //static serving
-app.use(express.static(path.join(__dirname, "../views", "statics")))
+app.use(express.static(path.join(process.cwd(), "views", "statics")))
 console.log(process.cwd())
 app.use(express.static(path.join(process.cwd(), "media")))
 

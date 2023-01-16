@@ -41,7 +41,7 @@ export async function createMenu(req: Request, res: Response) {
     //serving path
     const servingPath = path.join("/images/menu", filename)
     //upload path
-    const mediaPath = path.join(process.env.PWD, "media")
+    const mediaPath = path.join(process.cwd(), "media")
 
     //generate uuid for id of menu
     const id = v4()
