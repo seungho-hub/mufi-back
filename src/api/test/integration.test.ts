@@ -24,14 +24,17 @@ const testRawData = fs.readFileSync(`src/api/test/data.json`)
 
 const { testUser, testStore, updateStore, testMenu } = JSON.parse(testRawData.toString())
 
-const agent = chai.request.agent(server)
-
+const buserAgent: ChaiHttp.Agent = chai.request.agent(server);
+const kioskAgent: ChaiHttp.Agent = chai.request.agent(server);
+const userAgent: ChaiHttp.Agent = chai.request.agent(server);
 /**
  * mufi project의 예외사항은 거의 없다.
  * 때문에 specific step을 통과하는 test를 작성한다.
  */
 if (server.listening) {
-    describe("main", () => {
+    let sin: String;
+    let uin: String;
+    describe("Buser", () => {
 
         before(() => {
             //before start test, delete buser also columns related buser
@@ -44,8 +47,8 @@ if (server.listening) {
         })
 
         //test_buser로 회원가입한다.
-        step("1. [buser] signup", (done) => {
-            agent
+        step("1. signup", (done) => {
+            buserAgent
                 .post("/auth/buser/signup")
                 .type("form")
                 .send({
@@ -62,8 +65,8 @@ if (server.listening) {
         })
 
         //test_buser로 로그인한다.
-        step("2. [buser] signin", (done) => {
-            agent
+        step("2. signin", (done) => {
+            buserAgent
                 .post("/auth/buser/signin")
                 .type("form")
                 .send({
@@ -80,8 +83,8 @@ if (server.listening) {
 
         //access home with test_buser
         //check authentication after signin
-        step("3. [buser] access home", (done) => {
-            agent
+        step("3. access home", (done) => {
+            buserAgent
                 .get("/buser/home")
                 .end((err, res) => {
                     expect(err).to.be.null
@@ -95,8 +98,8 @@ if (server.listening) {
 
         //we do not know id of buser so,
         //test get buser and set save buser id
-        step("4. [buser] get self", (done) => {
-            agent
+        step("4. get self", (done) => {
+            buserAgent
                 .get("/api/buser/self")
                 .end((err, res) => {
                     expect(err).to.be.null
@@ -110,7 +113,7 @@ if (server.listening) {
         })
 
         //Create store
-        step("5. [buser] create store", (done) => {
+        step("5. create store", (done) => {
             //1. 먼저 mufi 측에서 store를 id, code, buser_id만 채워서 생성한 후 code를 buser실제 사용자에게 알려준다.
             const registerStoreQ = `INSERT INTO stores(id, code, buser_id) VALUES('${testStore.id}', '${testStore.code}', '${testUser.id}')`
 
@@ -123,7 +126,7 @@ if (server.listening) {
             })
 
             //request create store with code which provided from Mufi
-            agent
+            buserAgent
                 .post("/api/buser/store")
                 .type("form")
                 .send({
@@ -147,8 +150,8 @@ if (server.listening) {
         })
 
         //Read store
-        step("6. [buser] get store", (done) => {
-            agent
+        step("6. get store", (done) => {
+            buserAgent
                 .get("/api/buser/store")
                 .query({
                     store_id: testStore.id
@@ -165,8 +168,8 @@ if (server.listening) {
         })
 
         //Read stores
-        step("7. [buser] gets store", (done) => {
-            agent
+        step("7. gets store", (done) => {
+            buserAgent
                 .get("/api/buser/store")
                 .end((err, res) => {
                     expect(err).to.be.null
@@ -178,8 +181,8 @@ if (server.listening) {
         })
 
         //Update store
-        step("8. [buser] update store", (done) => {
-            agent
+        step("8. update store", (done) => {
+            buserAgent
                 .put("/api/buser/store")
                 .query({
                     store_id: testStore.id,
@@ -199,8 +202,8 @@ if (server.listening) {
                 })
         })
 
-        step("9. [buser] create menu", (done) => {
-            agent
+        step("9. create menu", (done) => {
+            buserAgent
                 .post("/api/buser/menu")
                 .query({
                     store_id: testStore.id
@@ -224,8 +227,8 @@ if (server.listening) {
 
         //we do not know id of created menu
         //get menu and save id of created menu just before
-        step("10. [buser] get menu", (done) => {
-            agent
+        step("10. get menu", (done) => {
+            buserAgent
                 .get("/api/buser/menu")
                 .query({
                     store_id: testStore.id,
@@ -240,8 +243,8 @@ if (server.listening) {
                 })
         })
 
-        step("11. [buser] get all of menu of store", (done) => {
-            agent
+        step("11. get all of menu of store", (done) => {
+            buserAgent
                 .get("/api/buser/menu")
                 .query({
                     store_id: testStore.id,
@@ -255,12 +258,12 @@ if (server.listening) {
                 })
         })
 
-        step("12. [buser] update menu", (done) => {
+        step("12. update menu", (done) => {
             done()
         })
 
-        step("13. [buser] generate store identifier number", (done) => {
-            agent
+        step("13. generate store identifier number", (done) => {
+            buserAgent
                 .get("/api/buser/sin")
                 .query({
                     store_id: testStore.id,
@@ -269,12 +272,12 @@ if (server.listening) {
                     expect(err).to.be.null
                     expect("Location", "/api/buser/sin")
                     expect(res).to.have.status(200)
-
+                    sin = res.body.data
                     done()
                 })
         })
 
-        // step("14. [buser] get order", (done) => {
+        // step("14. get order", (done) => {
         //     agent
         //         .get("/api/buser/order")
         //         .query({
@@ -290,8 +293,8 @@ if (server.listening) {
         //         })
         // })
 
-        step("15. [buser] get orders", (done) => {
-            agent
+        step("15. get orders", (done) => {
+            buserAgent
                 .get("/api/buser/order")
                 .query({
                     store_id: testStore.id,
@@ -301,6 +304,23 @@ if (server.listening) {
                     expect("Location", "/api/buser/sin")
                     expect(res).to.have.status(200)
 
+                    done()
+                })
+        })
+    })
+
+    describe("Kiosk", () => {
+        step("1.input sin", (done) => {
+            kioskAgent
+                .post("/auth/kiosk/store")
+                .type("form")
+                .send({
+                    sin
+                })
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect("Location", "/auth/kiosk/user")
+                    expect(res).to.have.status(200)
                     done()
                 })
         })
