@@ -1,5 +1,6 @@
 import { Router } from "express"
 import { storeAgent, userAgent, userAgentStatus } from "./controller"
+import { checkStoreAgent, checkUserAgent } from "./middleware"
 export const kioskAuthRouter = Router()
 
 //agent form을 rendering합니다.
@@ -10,11 +11,11 @@ kioskAuthRouter.post("/agent-store", storeAgent)
 kioskAuthRouter.delete("/agent-store", storeAgent)
 
 //agent의 user wait page를 rendering합니다.
-kioskAuthRouter.get("/agent-user", userAgent)
+kioskAuthRouter.get("/agent-user", checkStoreAgent, userAgent)
 //agent를 요청한 user가 있는지 확인합니다.
-kioskAuthRouter.get("/agent-status", userAgentStatus)
+kioskAuthRouter.get("/agent-status", checkStoreAgent, userAgentStatus)
 //agent에서 user를 logout시킵니다.
-kioskAuthRouter.delete("/agent-user", userAgent)
+kioskAuthRouter.delete("/agent-user", checkStoreAgent, checkUserAgent, userAgent)
 
 
 
