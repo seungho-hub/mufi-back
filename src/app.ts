@@ -30,7 +30,7 @@ import createSessionConfig from "./api/config/SessionConfig"
 const MySQLStore = require("express-mysql-session")(session)
 import { bUserAuthenticated } from "./api/auth/buser/middleware"
 import { userAuthenticated } from "./api/auth/user/middleware"
-import { checkGotStoreAuthorization, checkGotUserAuthorization } from "./api/auth/kiosk/middleware"
+import { checkStoreAgent, checkUserAgent } from "./api/auth/kiosk/middleware"
 
 export const app = express()
 
@@ -101,12 +101,12 @@ app.use("/api/buser/sin", sinRouter)
 app.use("/api/buser/order", storeOrderRouter)
 
 //--------------------------------------
-app.use("/api/kiosk", checkGotStoreAuthorization)
-app.use("/api/kiosk", checkGotUserAuthorization)
+app.use("/api/kiosk", checkStoreAgent)
+app.use("/api/kiosk", checkUserAgent)
 app.use("/api/kiosk/order", orderRouter)
 
-app.use("/kiosk", checkGotStoreAuthorization)
-app.use("/kiosk", checkGotUserAuthorization)
+app.use("/kiosk", checkStoreAgent)
+app.use("/kiosk", checkUserAgent)
 app.use("/kiosk", kioskRouter)
 
 app.use("/auth/kiosk", kioskAuthRouter)

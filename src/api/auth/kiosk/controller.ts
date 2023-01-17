@@ -95,7 +95,7 @@ export const storeAgent = async (req: Request, res: Response) => {
             //sin의 유효성을 확인하는 위의 과정이 문제없이 종료된경우
             .then(() => {
 
-                res.redirect("/auth/kiosk/agent/user")
+                res.redirect("/auth/kiosk/agent-user")
             })
             //sin의 유효성을 확인하는 위의 과정 중 문제가 발생했을 경우
             .catch((err) => {

@@ -28,7 +28,7 @@
     function poll() {
         // Send an HTTP request to the URL
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/auth/kiosk/agent-status');
+        xhr.open('GET', '/auth/kiosk/agent-status');
         xhr.send();
 
         // Process the response

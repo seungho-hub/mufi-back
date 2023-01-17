@@ -53,10 +53,23 @@
         </ul>
     </div>
 
-    <form action="/auth/kiosk/user/signout" method="POST">
-        <button>로그아웃</button>
-    </form>
+    <button id="signout-button">signout</button>
 </body>
+
+<script>
+    document.getElementById("signout-button").addEventListener("click", function() {
+        fetch("/auth/kiosk/agent-user", {
+                method: "DELETE"
+            })
+            .then(() => {
+                // redirect to sign in page
+                window.location.href = "/auth/kiosk/agent-user";
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    });
+</script>
 
 
 </html>
