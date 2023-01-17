@@ -10,12 +10,29 @@
 
 <body>
     <h1>wait user</h1>
-    <form action="/auth/kiosk/user" method="POST">
-        <label for="">input uin</label>
-        <input name="uin" type="password" inputmode="numeric" maxlength="6">
-    </form>
 
     <img src="<%= qrDataURL %>" alt="">
 </body>
+
+
+<script>
+    function poll() {
+        // Send an HTTP request to the URL
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/auth/kiosk/user');
+        xhr.send();
+
+        // Process the response
+        xhr.onload = function() {
+            console.log(xhr.status)
+            if (xhr.status === 200) {
+                window.location.href = "/kiosk"
+            }
+        };
+    }
+
+    // Poll the URL every 1000 milliseconds (1 second)
+    setInterval(poll, 1000);
+</script>
 
 </html>

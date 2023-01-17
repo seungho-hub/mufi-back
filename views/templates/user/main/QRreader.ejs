@@ -1,42 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <title>QR reader</title>
+    <title>QR Code Reader</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr"></script>
+
 </head>
 
 <body>
-    <div id="qr-reader" width="500px"></div>
+    <h1>키오스크의 QR code를 비춰주세요</h1>
+
+    <div id="qr-reader"></div>
+    <script>
+        // Check if the browser supports the WebRTC API
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            // Get the video element that will display the camera feed
+            const video = document.createElement("video");
+            video.setAttribute("autoplay", true);
+            video.setAttribute("muted", true);
+            video.setAttribute("playsinline", true);
+
+            // Get the canvas element that will display the QR code
+            const canvas = document.createElement("canvas");
+            canvas.style.display = "none";
+
+            // Append the video and canvas elements to the page
+            document.getElementById("qr-reader").appendChild(video);
+            document.getElementById("qr-reader").appendChild(canvas);
+
+            // Get the QR code reader library
+            const jsQR = window.jsQR;
+
+            // Request access to the user's camera
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "environment"
+                }
+            }).then(function(stream) {
+                // Set the source of the video element to the stream from the camera
+                video.srcObject = stream;
+
+                // Wait for the video element to load and display the first frame
+                video.addEventListener("loadeddata", function() {
+                    // Get the width and height of the video element
+                    const width = video.videoWidth;
+                    const height = video.videoHeight;
+
+                    // Set the width and height of the canvas element to the same values
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // Get the context of the canvas element
+                    const ctx = canvas.getContext("2d");
+
+                    // Set the width and height of the canvas element to the same values
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // Set a timer to continuously scan the video frame for QR codes
+                    setInterval(function() {
+                        // Draw the current frame of the video element onto the canvas
+                        ctx.drawImage(video, 0, 0, width, height);
+
+                        // Get the image data from the canvas
+                        const imageData = ctx.getImageData(0, 0, width, height);
+
+                        // Try to read a QR code from the image data
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                        // If a QR code was found, redirect to the URL contained in the code
+                        if (code) {
+                            window.location.href = code.data;
+                        }
+                    }, 500);
+                });
+            }).catch(function(err) {
+                console.error(err);
+            });
+        } else {
+            console.error("WebRTC is not supported in this browser");
+        }
+    </script>
 </body>
-
-<script>
-    function onScanSuccess(decodedText, decodedResult) {
-        // handle the scanned code as you like, for example:
-        console.log(`Code matched = ${decodedText}`, decodedResult);
-    }
-
-    function onScanFailure(error) {
-        // handle scan failure, usually better to ignore and keep scanning.
-        // for example:
-        console.warn(`Code scan error = ${error}`);
-    }
-
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "qr-reader", {
-            fps: 10,
-            qrbox: {
-                width: 250,
-                height: 250
-            }
-        },
-        /* verbose= */
-        false);
-
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-</script>
-
-</html>
