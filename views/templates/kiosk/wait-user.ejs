@@ -8,10 +8,19 @@
     <title>Document</title>
 </head>
 
-<body>
-    <h1>wait user</h1>
+<style>
+    div {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
 
-    <img src="<%= qrDataURL %>" alt="">
+<body>
+    <div>
+        <img src="<%= qrDataURL %>" alt="">
+    </div>
 </body>
 
 
@@ -19,12 +28,11 @@
     function poll() {
         // Send an HTTP request to the URL
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/auth/kiosk/user');
+        xhr.open('POST', '/auth/kiosk/agent-status');
         xhr.send();
 
         // Process the response
         xhr.onload = function() {
-            console.log(xhr.status)
             if (xhr.status === 200) {
                 window.location.href = "/kiosk"
             }

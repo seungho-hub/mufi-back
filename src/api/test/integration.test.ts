@@ -312,14 +312,15 @@ if (server.listening) {
     describe("Kiosk", () => {
         step("1.input sin", (done) => {
             kioskAgent
-                .post("/auth/kiosk/store")
+                .post("/auth/kiosk/agent-store")
                 .type("form")
                 .send({
                     sin
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect("Location", "/auth/kiosk/user")
+                    expect("Location", "/auth/kiosk/agent-user")
+                    console.log(res.body)
                     expect(res).to.have.status(200)
                     done()
                 })

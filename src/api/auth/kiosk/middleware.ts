@@ -5,7 +5,7 @@ export const checkGotStoreAuthorization = async (req: Request, res: Response, ne
         return next()
     }
 
-    res.redirect("/auth/kiosk/store")
+    res.redirect("/auth/kiosk/agent-store")
 }
 
 export const checkGotUserAuthorization = async (req: Request, res: Response, next: NextFunction) => {
@@ -13,5 +13,5 @@ export const checkGotUserAuthorization = async (req: Request, res: Response, nex
         return next()
     }
 
-    res.redirect("/auth/kiosk/user")
-}   
+    res.redirect("/auth/kiosk/agent-user")
+}
