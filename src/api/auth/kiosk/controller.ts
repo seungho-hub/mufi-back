@@ -12,6 +12,7 @@ import md5 from "md5"
 //exception case1. sin이 입력되지 않았다면 거부
 //exception case2. 입력한 sin이 유효하지 않다면 거부
 //exception case3. 이미 sin을 입력받아 agent가 존재한다면, 거부. 새로 sin을 입력하여 agent를 생성하려면 먼저 agent에서 logout해야한다.
+//exception case4. middleware가 안걸리기 때문에 session check하고 stale session이라면 제거한다.
 export const storeAgent = async (req: Request, res: Response) => {
     //if request with GET method, render agent form
     if (req.method === "GET") {
@@ -45,12 +46,25 @@ export const storeAgent = async (req: Request, res: Response) => {
 
         //exception case3
         if (req.session.kiosk && req.session.kiosk.store_id) {
-            res.status(404).json({
-                code: 404,
-                message: "이미 운영중입니다. 키오스크에서 로그아웃 후 다시 입력해주세요."
+
+            const agent = await Agent.findOne({
+                where: {
+                    store_id: req.session.kiosk.store_id
+                }
             })
 
-            return
+            //remove stale session
+            //agent session은 가지고 있지만 stale session인 경우 session을 날린다.
+            if (agent == null) {
+                req.session.kiosk = null
+            } else {
+                res.status(404).json({
+                    code: 404,
+                    message: "이미 운영중입니다. 키오스크에서 로그아웃 후 다시 입력해주세요."
+                })
+
+                return
+            }
         }
 
         const encrypted_sin = md5(inputedSin)
