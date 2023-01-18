@@ -34,8 +34,6 @@ import { checkStoreAgent, checkUserAgent } from "./api/auth/kiosk/middleware"
 
 export const app = express()
 
-const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
-
 morgan.token("session", customTokenConfig)
 
 app.use(morgan(
@@ -60,7 +58,6 @@ app.set("views", path.join(process.cwd(), "views", "templates"))
 
 //static serving
 app.use(express.static(path.join(process.cwd(), "views", "statics")))
-console.log(process.cwd())
 app.use(express.static(path.join(process.cwd(), "media")))
 
 //enable body parser
