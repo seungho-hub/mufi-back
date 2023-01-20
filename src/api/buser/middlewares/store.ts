@@ -1,14 +1,13 @@
 import { Request, Response, NextFunction } from "express"
-import { unless } from "express-unless"
 import Store from "../../models/Store"
 
 //store authrize check middleware
 //1.store api에는 모두 store_id가 querystring으로 들어가야 함.
 //2.해당 buser의 store여야 함.
-export async function checkStoreAuthroize(req: Request, res: Response, nexst: NextFunction) {
-    const targetId = req.query.store_id
+export async function checkStoreAuthorization(req: Request, res: Response, next: NextFunction) {
+    const storeId = req.params.storeId
 
-    if (targetId == undefined) {
+    if (storeId == undefined) {
         res.status(400).json({
             code: 400,
             message: "매장 id가 입력되지 않았습니다."
@@ -19,11 +18,11 @@ export async function checkStoreAuthroize(req: Request, res: Response, nexst: Ne
 
     const targetStore = await Store.findOne({
         where: {
-            id: targetId,
+            id: storeId,
         }
     })
 
-    //targetid로 등뢱된 store가 있는지 확인한다.
+    //storeId로 등뢱된 store가 있는지 확인한다.
     if (targetStore == null) {
         res.status(404).json({
             code: 404,
@@ -42,7 +41,8 @@ export async function checkStoreAuthroize(req: Request, res: Response, nexst: Ne
         return
     }
 
-    nexst()
-}
+    //menu가 store authorization을 거치며 storeId가 parameter에서 떨어지기 때문에 request에 저장해준다.
+    req.app.locals.storeId = storeId
 
-checkStoreAuthroize.unless = unless
+    next()
+}

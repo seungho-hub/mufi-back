@@ -89,67 +89,62 @@ export async function createStore(req: Request, res: Response) {
 }
 
 export async function getStore(req: Request, res: Response) {
-    const targetId = req.query.store_id
+    const targetId = req.params.storeId
 
-
-    //store_id를 지정하여 1개 매장의 정보를 가져옴
-    if (targetId) {
-        const store = await Store.findOne({
-            where: {
-                id: targetId,
-                updatedAt: {
-                    [Op.ne]: null,
-                }
+    const store = await Store.findOne({
+        where: {
+            id: targetId,
+            updatedAt: {
+                [Op.ne]: null,
             }
-        })
-
-        if (store == null) {
-            res.status(404).json({
-                code: 404,
-                message: "해당 id와 일치하는 매장을 찾지 못했습니다."
-            })
-            return
         }
+    })
 
-
-        res.status(200).json({
-            code: 200,
-            data: store
-        })
-
-        return
-
-    }
-    //store_id를 지정하지 않아 모든 매장의 정보를 기져옴
-    else {
-        const stores = await Store.findAll({
-            where: {
-                buser_id: req.session.buser.id,
-                updatedAt: {
-                    [Op.ne]: null,
-                }
-            }
-        })
-
-        if (stores == null) {
-            res.status(404).json({
-                code: 404,
-                message: "매장이 존재하지 않습니다."
-            })
-
-            return
-        }
-
-        res.status(200).json({
-            code: 200,
-            data: stores,
+    if (store == null) {
+        res.status(404).json({
+            code: 404,
+            message: "해당 id와 일치하는 매장을 찾지 못했습니다."
         })
         return
     }
+
+
+    res.status(200).json({
+        code: 200,
+        data: store
+    })
+
+    return
 }
 
+export async function getStores(req: Request, res: Response) {
+    const stores = await Store.findAll({
+        where: {
+            buser_id: req.session.buser.id,
+            updatedAt: {
+                [Op.ne]: null,
+            }
+        }
+    })
+
+    if (stores == null) {
+        res.status(404).json({
+            code: 404,
+            message: "매장이 존재하지 않습니다."
+        })
+
+        return
+    }
+
+    res.status(200).json({
+        code: 200,
+        data: stores,
+    })
+
+    return
+}
 export async function updateStore(req: Request, res: Response) {
-    const targetId = req.query.store_id
+    const targetId = req.params.storeId
 
     if (targetId == undefined) {
         res.status(400).json({
@@ -215,7 +210,7 @@ export async function updateStore(req: Request, res: Response) {
 
 //delete store
 export async function deleteStore(req: Request, res: Response) {
-    const targetId = req.query.store_id
+    const targetId = req.params.storeId
 
     if (targetId == undefined) {
         res.status(400).json({

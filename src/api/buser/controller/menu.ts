@@ -9,7 +9,7 @@ import { Model } from "sequelize/types"
 import Store from "../../models/Store"
 
 export async function createMenu(req: Request, res: Response) {
-    const store_id = req.query.store_id
+    const store_id = req.app.locals.storeId
 
     const { label, price, description } = req.body
 
@@ -76,84 +76,57 @@ export async function createMenu(req: Request, res: Response) {
         })
 }
 
-//1. store id만 지정된 경우 => 해당 store의 모든 menu
-//2. store_id, menu_id 가 지정된 경우 => 단일 menu
-//3. 아무것도 지정되지 않은 경우 => buser의 모든 menu 
 export async function getMenu(req: Request, res: Response) {
-    const targetStoreId = req.query.store_id
-    const targetMenuId = req.query.menu_id
+    const targetStoreId = req.app.locals.storeId
+    const targetMenuId = req.params.menuId
 
-    //1, store id만 지정된 경우
-    //해당 store의 모든 menu전달
-    if (targetStoreId && (targetMenuId == undefined)) {
-        const stores = await Store.findAll({
-            where: {
-                id: targetStoreId,
-                buser_id: req.session.buser.id
-            },
-            include: Menu
-        })
-
-        if (stores == null) {
-            res.status(400).json({
-                code: 404,
-                message: "매장을 찾지 못했습니다."
-            })
-
-            return
+    const targetMenu = await Menu.findOne({
+        where: {
+            id: targetMenuId,
+            store_id: targetStoreId,
+            buser_id: req.session.buser.id
         }
+    })
 
-        res.status(200).json({
-            code: 200,
-            data: stores
-        })
-
-        //exit function
-        return
-    }
-    //2. store_id, menu_id가 지정된 경우
-    //해당 단일 menu만 전달
-    else if (targetStoreId && targetMenuId) {
-        const targetMenu = await Menu.findOne({
-            where: {
-                id: targetMenuId,
-                store_id: targetStoreId,
-                buser_id: req.session.buser.id
-            }
-        })
-
-        if (targetMenu == null) {
-            res.status(404).json({
-                code: 404,
-                message: "메뉴가 존재하지 않습니다."
-            })
-
-            return
-        }
-
-        res.status(200).json({
-            code: 200,
-            data: targetMenu
+    if (targetMenu == null) {
+        res.status(404).json({
+            code: 404,
+            message: "메뉴가 존재하지 않습니다."
         })
 
         return
     }
-    //3. 아무것도 지정되지 않은 경우
-    //모든 menu를 전달
-    else if ((targetStoreId || targetMenuId) == undefined) {
-        const allMenu = await Menu.findAll({ where: { buser_id: req.session.buser.id } })
 
-        res.status(200).json({
-            code: 200,
-            data: allMenu,
-        })
+    res.status(200).json({
+        code: 200,
+        data: targetMenu
+    })
 
-        return
-    }
+    return
 }
 
+export async function getMenus(req: Request, res: Response) {
+    const targetStoreId = req.app.locals.storeId
+
+    const menus = await Menu.findAll({
+        where: {
+            store_id: targetStoreId,
+        },
+        include: Menu
+    })
+
+
+    res.status(200).json({
+        code: 200,
+        data: menus
+    })
+
+    //exit function
+    return
+}
 export async function deleteMenu(req: Request, res: Response) {
-    const targetMenuId = req.query.menu_id
+    const targetStoreId = req.app.locals.storeId
+    const targetMenuId = req.params.menuId
 
     if (targetMenuId == undefined) {
         res.status(400).json({
@@ -167,7 +140,7 @@ export async function deleteMenu(req: Request, res: Response) {
     const targetMenu = await Menu.findOne({
         where: {
             id: targetMenuId,
-            buser_id: req.session.buser.id
+            store_id: targetStoreId
         }
     })
 

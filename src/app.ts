@@ -14,7 +14,6 @@ import { buserRouter } from "./api/buser/routes/buser"
 import { authBUser } from "./api/auth/buser/route"
 import { bUserRouter } from "./buser/router"
 import { storeRouter } from "./api/buser/routes/store"
-import { storeOrderRouter } from "./api/buser/routes/order"
 import { kioskRouter } from "./kiosk/router"
 import { kioskAuthRouter } from "./api/auth/kiosk/route"
 import { orderRouter } from "./api/kiosk/routes/order"
@@ -92,10 +91,9 @@ app.use("/auth/buser", authBUser)
 app.use("/buser", bUserRouter)
 
 app.use("/api/buser/", buserRouter)
-app.use("/api/buser/menu", menuRouter)
-app.use("/api/buser/store", storeRouter)
-app.use("/api/buser/sin", sinRouter)
-app.use("/api/buser/order", storeOrderRouter)
+app.use("/api/buser/stores", storeRouter)
+app.use("/api/buser/stores/:storeId/menus", menuRouter)
+app.use("/api/buser/stores/:storeId/sin", sinRouter)
 
 //--------------------------------------
 app.use("/api/kiosk", checkStoreAgent)

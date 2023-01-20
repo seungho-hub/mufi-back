@@ -12,4 +12,4 @@ authBUser.get("/signup", renderSignup)
 
 authBUser.post("/signup", signup)
 
-authBUser.get('/signout', signout)
+authBUser.delete('/signout', signout)

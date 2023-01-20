@@ -5,7 +5,7 @@ import md5 from "md5"
 const gpc = require("generate-pincode")
 
 export const generateSin = async (req: Request, res: Response) => {
-    const store_id = req.query.store_id
+    const store_id = req.app.locals.storeId
 
     //generate Store Identifier Number
     const sin = gpc(6)

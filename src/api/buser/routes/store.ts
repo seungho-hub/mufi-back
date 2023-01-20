@@ -1,16 +1,22 @@
 import { Router } from "express"
-import { createStore, getStore, deleteStore, updateStore, getOrderOfStore } from "../controller/store"
-import { checkStoreAuthroize } from "../middlewares/store"
-//"api/buser/store"
+import { createStore, getStore, getStores, deleteStore, updateStore, getOrderOfStore } from "../controller/store"
+import { checkStoreAuthorization } from "../middlewares/store"
+
+//"/api/buser/stores"
 export const storeRouter = Router()
 
-//
-storeRouter.use(checkStoreAuthroize.unless({
-    method: ["GET", "POST"]
-}))
-storeRouter.get("/", getStore)
-storeRouter.post("/", createStore)
-storeRouter.put("/", updateStore)
-storeRouter.delete("/", deleteStore)
 
-storeRouter.get("/order", getOrderOfStore)
+storeRouter.use("/:storeId", checkStoreAuthorization);
+
+//create
+storeRouter.post("/", createStore)
+
+//read
+storeRouter.get("/:storeId", getStore)
+storeRouter.get("/", getStores)
+
+//update
+storeRouter.put("/:storeId", updateStore)
+
+//delete
+storeRouter.delete("/:storeId", deleteStore)

@@ -127,7 +127,7 @@ if (server.listening) {
 
             //request create store with code which provided from Mufi
             buserAgent
-                .post("/api/buser/store")
+                .post("/api/buser/stores")
                 .type("form")
                 .send({
                     code: testStore.code,
@@ -141,7 +141,7 @@ if (server.listening) {
                     //requestr중 error가 없고
                     expect(err).to.be.null
                     //middleware에 걸려 redirect되지 않았으며
-                    expect("Location", "/api/buser/store")
+                    expect("Location", "/api/buser/stores")
                     //200의 status code를 받아 성공적으로 매장 생성을 확인
                     expect(res).to.have.status(200)
 
@@ -152,13 +152,10 @@ if (server.listening) {
         //Read store
         step("6. get store", (done) => {
             buserAgent
-                .get("/api/buser/store")
-                .query({
-                    store_id: testStore.id
-                })
+                .get(`/api/buser/stores/${testStore.id}`)
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect("Location", "/api/buser/store")
+                    expect("Location", `/api/buser/stores/${testStore.id}`)
                     expect(res).to.have.status(200)
 
                     expect(res.body.data.code).to.be.equal(testStore.code)
@@ -170,10 +167,10 @@ if (server.listening) {
         //Read stores
         step("7. gets store", (done) => {
             buserAgent
-                .get("/api/buser/store")
+                .get("/api/buser/stores")
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect("Location", "/api/buser/store")
+                    expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
 
                     done()
@@ -183,10 +180,7 @@ if (server.listening) {
         //Update store
         step("8. update store", (done) => {
             buserAgent
-                .put("/api/buser/store")
-                .query({
-                    store_id: testStore.id,
-                })
+                .put(`/api/buser/stores/${testStore.id}`)
                 .type("form")
                 .send({
                     name: updateStore.name,
@@ -196,7 +190,7 @@ if (server.listening) {
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect("Location", "/api/buser/store")
+                    expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
                     done()
                 })
@@ -204,10 +198,7 @@ if (server.listening) {
 
         step("9. create menu", (done) => {
             buserAgent
-                .post("/api/buser/menu")
-                .query({
-                    store_id: testStore.id
-                })
+                .post(`/api/buser/stores/${testStore.id}/menus`)
                 .type("form")
                 .field({
                     label: testMenu.label,
@@ -217,7 +208,7 @@ if (server.listening) {
                 .attach("image", fs.readFileSync(testMenu.image), "image.png")
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect("Location", "/api/buser/store")
+                    expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
                     testMenu.id = res.body.data.id
 
@@ -229,14 +220,10 @@ if (server.listening) {
         //get menu and save id of created menu just before
         step("10. get menu", (done) => {
             buserAgent
-                .get("/api/buser/menu")
-                .query({
-                    store_id: testStore.id,
-                    menu_id: testMenu.id
-                })
+                .get(`/api/buser/stores/${testStore.id}/menus/${testMenu.id}`)
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect("Location", "/api/buser/store")
+                    expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
 
                     done()
@@ -245,13 +232,10 @@ if (server.listening) {
 
         step("11. get all of menu of store", (done) => {
             buserAgent
-                .get("/api/buser/menu")
-                .query({
-                    store_id: testStore.id,
-                })
+                .get(`/api/buser/stores/${testStore.id}/menus/${testMenu.id}`)
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect("Location", "/api/buser/store")
+                    expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
 
                     done()
@@ -264,46 +248,12 @@ if (server.listening) {
 
         step("13. generate store identifier number", (done) => {
             buserAgent
-                .get("/api/buser/sin")
-                .query({
-                    store_id: testStore.id,
-                })
+                .post(`/api/buser/stores/${testStore.id}/sin`)
                 .end((err, res) => {
                     expect(err).to.be.null
                     expect("Location", "/api/buser/sin")
                     expect(res).to.have.status(200)
                     sin = res.body.data
-                    done()
-                })
-        })
-
-        // step("14. get order", (done) => {
-        //     agent
-        //         .get("/api/buser/order")
-        //         .query({
-        //             store_id: testStore.id,
-
-        //         })
-        //         .end((err, res) => {
-        //             expect(err).to.be.null
-        //             expect("Location", "/api/buser/sin")
-        //             expect(res).to.have.status(200)
-
-        //             done()
-        //         })
-        // })
-
-        step("15. get orders", (done) => {
-            buserAgent
-                .get("/api/buser/order")
-                .query({
-                    store_id: testStore.id,
-                })
-                .end((err, res) => {
-                    expect(err).to.be.null
-                    expect("Location", "/api/buser/sin")
-                    expect(res).to.have.status(200)
-
                     done()
                 })
         })
@@ -320,7 +270,6 @@ if (server.listening) {
                 .end((err, res) => {
                     expect(err).to.be.null
                     expect("Location", "/auth/kiosk/agent-user")
-                    console.log(res.body)
                     expect(res).to.have.status(200)
                     done()
                 })
