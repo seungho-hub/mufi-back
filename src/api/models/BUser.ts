@@ -3,25 +3,25 @@ import { DataTypes, NOW } from "sequelize";
 import Store from "./Store"
 import Menus from "./Menu"
 
-//store는 mufi측에서 id만 채워서 등록됨.
 const BUsers = sequelize.define("bUser", {
     id: {
         type: DataTypes.UUID,
         primaryKey: true,
     },
-    //username
     username: {
         type: DataTypes.STRING,
+        allowNull: false
     },
     email: {
         type: DataTypes.STRING,
         validate: {
             isEmail: true,
-        }
+        },
+        allowNull: false
     },
     encrypted_password: {
-        type: DataTypes.STRING(32),
-        allowNull: true,
+        type: DataTypes.STRING,
+        allowNull: false,
     },
     registeredAt: {
         type: DataTypes.DATE,

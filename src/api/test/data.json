@@ -3,7 +3,7 @@
         "id": "",
         "username": "test_username",
         "email": "test_email@gmail.com",
-        "password": "test_password"
+        "password": "teststrongPassword123"
     },
     "testStore": {
         "id": "test_id",

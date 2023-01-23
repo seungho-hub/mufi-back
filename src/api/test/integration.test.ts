@@ -59,7 +59,7 @@ if (server.listening) {
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect(res).to.have.status(200)
+                    expect(res).to.have.status(201)
                     done()
                 })
         })
