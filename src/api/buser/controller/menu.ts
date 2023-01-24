@@ -5,167 +5,177 @@ import path from "path"
 import mime from "mime-types"
 import { v4 } from "uuid"
 
-import { Model } from "sequelize/types"
-import Store from "../../models/Store"
-
 export async function createMenu(req: Request, res: Response) {
-    const store_id = req.app.locals.storeId
+    try {
+        const store_id = req.app.locals.storeId
 
-    const { label, price, description } = req.body
+        const { label, price, description } = req.body
 
-    //check all input fields have value
-    if ((label && price && description) == undefined) {
-        res.status(400).json({
-            code: 400,
-            message: "입력하지 않은 필드가 있습니다."
+        //field가 모두 채워지지 않았으면 reject
+        if ((label && price && description) == undefined) {
+            return res.status(400).json({
+                error: "required field is not provided",
+                message: "입력하지 않은 필드가 있습니다."
+            })
+        }
+
+        //image file이 제출되지 않았으면 reject
+        if (!req.files) {
+            return res.status(400).json({
+                error: "image file is required",
+                message: "상품의 이미지가 제출되지 않았습니다."
+            })
+        }
+
+        if (await Menu.findOne({ where: { label } })) {
+            return res.status(409).json({
+                error: "conflict label name",
+                message: "동일한 이름의 상품이 존재합니다."
+            })
+        }
+
+        const image: UploadedFile = req.files.image as UploadedFile
+
+        const extension = mime.extension(image.mimetype)
+        const filename = image.md5 + "." + extension
+
+        //make serving path
+        const servingPath = path.join("/images/menu", filename)
+
+        //make upload path
+        const mediaPath = path.join(process.cwd(), "media")
+
+        //generate uuid for id of menu
+        const id = v4()
+
+        //upload image
+        await image.mv(path.join(mediaPath, servingPath))
+
+        //create menu
+        const registeredMenu = await Menu.create({
+            id,
+            label,
+            price,
+            image: servingPath,
+            store_id,
+            description,
+            buser_id: req.session.buser.id
         })
-        return
+
+        const publicMenuInfo = registeredMenu.toJSON();
+        delete publicMenuInfo.createdAt;
+        delete publicMenuInfo.updatedAt;
+        delete publicMenuInfo.buser_id;
+
+
+        res.status(201).json({
+            data: publicMenuInfo,
+            message: "성공적으로 상품이 등록되었습니다."
+        })
+    } catch (err) {
+        res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
     }
-
-    //check menu image submitted
-    if (req.files == null) {
-        res.status(400).json({
-            code: 400,
-            message: "상품의 이미자가 제출되지 않았습니다."
-        })
-        return
-    }
-
-    //type assertion as UploadFile
-    //if image file exist, can be assert upload file 
-    const image: UploadedFile = req.files.image as UploadedFile
-
-    const extension = mime.extension(image.mimetype)
-    const filename = image.md5 + "." + extension
-
-    //serving path
-    const servingPath = path.join("/images/menu", filename)
-    //upload path
-    const mediaPath = path.join(process.cwd(), "media")
-
-    //generate uuid for id of menu
-    const id = v4()
-
-    image.mv(path.join(mediaPath, servingPath))
-        //image uploaded successfully
-        .then(() => {
-            //create menu
-            return Menu.create({
-                id,
-                label,
-                price,
-                image: servingPath,
-                store_id,
-                description,
-                buser_id: req.session.buser.id
-            })
-        })
-        .then((menu) => {
-            res.status(200).json({
-                code: 200,
-                messag: "상품이 정상적으로 등록되었습니다.",
-                data: menu
-            })
-        })
-        //image upload failed
-        .catch(err => {
-            res.status(500).json({
-                code: 500,
-                message: "상품을 등록하는 도중 문제가 발생했습니다."
-            })
-        })
 }
 
 export async function getMenu(req: Request, res: Response) {
-    const targetStoreId = req.app.locals.storeId
-    const targetMenuId = req.params.menuId
+    try {
+        const targetStoreId = req.app.locals.storeId
+        const targetMenuId = req.params.menuId
 
-    const targetMenu = await Menu.findOne({
-        where: {
-            id: targetMenuId,
-            store_id: targetStoreId,
-            buser_id: req.session.buser.id
-        }
-    })
-
-    if (targetMenu == null) {
-        res.status(404).json({
-            code: 404,
-            message: "메뉴가 존재하지 않습니다."
+        const targetMenu = await Menu.findOne({
+            where: {
+                id: targetMenuId,
+                store_id: targetStoreId,
+                buser_id: req.session.buser.id
+            },
+            attributes: {
+                exclude: ["createdAt", "updatedAt", "buser_id"]
+            }
         })
 
-        return
+        if (!targetMenu) {
+            return res.status(404).json({
+                error: "Not Found",
+                message: "상품을 찾을 수 없습니다."
+            })
+        }
+
+        return res.status(200).json({
+            data: targetMenu,
+            message: "OK",
+        })
+    } catch (err) {
+        return res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
     }
-
-    res.status(200).json({
-        code: 200,
-        data: targetMenu
-    })
-
-    return
 }
 
 export async function getMenus(req: Request, res: Response) {
-    const targetStoreId = req.app.locals.storeId
+    try {
+        const targetStoreId = req.app.locals.storeId
 
-    const menus = await Menu.findAll({
-        where: {
-            store_id: targetStoreId,
-        },
-        include: Menu
-    })
+        const menus = await Menu.findAll({
+            where: {
+                store_id: targetStoreId,
+                buser_id: req.session.buser.id
+            },
+            attributes: {
+                exclude: ["createdAt", "updatedAt", "buser_id"]
+            }
+        },)
 
+        if (!menus.length) {
+            return res.status(404).json({
+                error: "Not Found",
+                message: "상품을 찾을 수 없습니다."
+            })
+        }
 
-    res.status(200).json({
-        code: 200,
-        data: menus
-    })
-
-    //exit function
-    return
+        return res.status(200).json({
+            data: menus,
+            message: "OK"
+        })
+    } catch (err) {
+        return res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
+    }
 }
 export async function deleteMenu(req: Request, res: Response) {
-    const targetStoreId = req.app.locals.storeId
-    const targetMenuId = req.params.menuId
+    try {
+        const targetStoreId = req.app.locals.storeId
+        const targetMenuId = req.params.menuId
 
-    if (targetMenuId == undefined) {
-        res.status(400).json({
-            code: 400,
-            message: "메뉴의 id가 전달되지 않았습니다."
+        const targetMenu = await Menu.findOne({
+            where: {
+                id: targetMenuId,
+                store_id: targetStoreId
+            }
         })
 
-        return
-    }
-    //get target menu instance
-    const targetMenu = await Menu.findOne({
-        where: {
-            id: targetMenuId,
-            store_id: targetStoreId
+        if (!targetMenu) {
+            return res.status(404).json({
+                error: "Not Found",
+                message: "상품을 찾을 수 없습니다."
+            })
         }
-    })
 
-    //there is no menu registered with the ID
-    if (targetMenu == null) {
-        res.status(404).json({
-            code: 404,
-            message: "상품을 찾는데 실패했습니다."
+        await targetMenu.destroy()
+
+        return res.status(204).json({
+            message: "상품이 정상적으로 삭제되었습니다."
         })
 
-        return
+    } catch (err) {
+        return res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
     }
-
-    //delete target menu
-    targetMenu.destroy()
-        .then(() => {
-            res.status(200).json({
-                code: 200,
-                message: "정상적으로 삭제되었습니다."
-            })
-        })
-        .catch(err => {
-            res.status(500).json({
-                code: 500,
-                message: "Internel Server Error"
-            })
-        })
 } 

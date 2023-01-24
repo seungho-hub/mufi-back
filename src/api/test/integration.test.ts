@@ -207,7 +207,7 @@ if (server.listening) {
                 .end((err, res) => {
                     expect(err).to.be.null
                     expect("Location", "/api/buser/stores")
-                    expect(res).to.have.status(200)
+                    expect(res).to.have.status(201)
                     testMenu.id = res.body.data.id
 
                     done()
