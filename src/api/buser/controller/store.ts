@@ -1,119 +1,125 @@
 import { Request, Response } from "express"
-import { UploadedFile } from "express-fileupload";
-import Menu from "../../models/Menu";
-import Order from "../../models/Order"
-import path from "path"
-import mime from "mime-types"
-import { v4 } from "uuid"
 import Store from "../../models/Store"
-import { ValidationError, QueryError, Op } from 'sequelize';
-
-//create store with body from
-//except case
-//1.empty value exist
-//2.not registered store code by mufi
-//3.store exist with store code
-//4.updated at field of store not null
+import { isZipCode } from "../../../lib/validator/storeValidator"
+import { Op } from 'sequelize';
 
 export async function createStore(req: Request, res: Response) {
-    //name, description, zip_code, detail_address
     const { code, name, description, zip_code, address, detail_address } = req.body
 
+    //field가 모두 채워지지 않았으면 reject
     if ((code && name && description && zip_code && address && detail_address) == undefined) {
-        res.status(400).json({
-            code: 400,
+        return res.status(400).json({
+            error: "required filed is not provided",
             message: "입력 되지 않은 필드가 있습니다."
         })
-        return
     }
 
-    const buser_id = req.session.buser.id
+    try {
+        const approvedStore = await Store.findOne({ where: { code } })
 
-    const registered_store = await Store.findOne({ where: { code } })
-
-    //등록된 code가 아닌 경우
-    if (registered_store == null) {
-        res.status(400).json({
-            code: 400,
-            message: "등록된 매장이 아닙니다, Mufi에 문의해주세요."
-        })
-
-        return
-    }
-
-    if (registered_store.getDataValue("registered")) {
-        res.status(400).json({
-            code: 400,
-            message: "이미 등록된 매장입니다.",
-        })
-
-        return
-    }
-
-    Store.update({
-        name,
-        description,
-        zip_code,
-        address,
-        detail_address,
-        registered: true,
-    },
-        {
-            where: { code },
-        })
-        .then((affectedCount) => {
-            res.status(200).json({
-                code: 200,
-                message: "성공적으로 매장이 등록되었습니다.",
+        //zip_code형식이 아니라면 reject
+        if (!isZipCode(zip_code)) {
+            return res.status(400).json({
+                error: "Incorrect zip code format.",
+                message: "잘못된 우편번호 형식입니다."
             })
+        }
 
-            return
+        //Mufi에서 승인되지 않았다면 reject
+        if (!approvedStore) {
+            return res.status(400).json({
+                error: "not accepted by Mufi",
+                message: "Mufi에서 승인되지 않은 매장입니다."
+            })
+        }
+
+        //이미 등록된 매장이라면 reject
+        if (approvedStore.get("registered")) {
+            return res.status(409).json({
+                error: "already registered",
+                message: "이미 등록된 매장입니다.",
+            })
+        }
+
+        //Mufi에서 등록은 했지만, 요청을 보낸 buser의 store로 등록되지 않았다면 reject
+        if (approvedStore.get("buser_id") != req.session.buser.id) {
+            return res.status(403).json({
+                error: "forbidden",
+                message: "권한이 없습니다."
+            })
+        }
+
+
+        await approvedStore.update({
+            name,
+            description,
+            zip_code,
+            address,
+            detail_address,
+            registered: true,
         })
-        .catch(err => {
-            if (err instanceof ValidationError) {
-                res.status(400).json({
-                    code: 400,
-                    message: "입력 값이 유효하지 않습니다."
-                })
 
-                return
+        const registeredStore = await Store.findOne({
+            where: {
+                id: approvedStore.get("id"),
+            },
+            attributes: {
+                exclude: ["code", "buser_id", "createdAt", "updatedAt"]
             }
-
-            res.status(500).json({
-                code: 500,
-                message: "알 수 없는 에러가 발생했습니다."
-            })
-
-            return
         })
+
+        return res.status(201).json({
+            data: registeredStore,
+            message: "성공적으로 매장이 등록되었습니다.",
+        })
+
+    } catch (err) {
+        res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
+    }
 }
 
 export async function getStore(req: Request, res: Response) {
     const targetId = req.params.storeId
 
-    const store = await Store.findOne({
-        where: {
-            id: targetId,
-            updatedAt: {
-                [Op.ne]: null,
+    try {
+        const store = await Store.findOne({
+            where: {
+                id: targetId,
+                buser_id: req.session.buser.id,
+                //Mufi에서 승인만 나고 등록되지 않은 store는 제외한다.
+                updatedAt: {
+                    [Op.ne]: null,
+                }
+            },
+            attributes: {
+                exclude: ["code", "buser_id", "createdAt", "updatedAt"]
             }
-        }
-    })
-
-    if (store == null) {
-        res.status(404).json({
-            code: 404,
-            message: "해당 id와 일치하는 매장을 찾지 못했습니다."
         })
-        return
+
+
+        //store를 찾지 못했다면 reject
+        if (!store) {
+            return res.status(404).json({
+                error: "Not Found",
+                message: "매장을 찾을 수 없습니다."
+            })
+        }
+
+
+        res.status(200).json({
+            data: store,
+            message: "OK"
+        })
+
+    } catch (err) {
+        res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
     }
-
-
-    res.status(200).json({
-        code: 200,
-        data: store
-    })
-
     return
 }
 
@@ -121,176 +127,118 @@ export async function getStores(req: Request, res: Response) {
     const stores = await Store.findAll({
         where: {
             buser_id: req.session.buser.id,
+            //Mufi에서 승인만 나고 등록되지 않은 store는 제외한다.
             updatedAt: {
                 [Op.ne]: null,
             }
+        },
+        attributes: {
+            exclude: ["code", "buser_id", "createdAt", "updatedAt"]
         }
     })
 
-    if (stores == null) {
-        res.status(404).json({
-            code: 404,
+    if (!stores.length) {
+        return res.status(404).json({
+            error: "Not Found",
             message: "매장이 존재하지 않습니다."
         })
-
-        return
     }
 
-    res.status(200).json({
-        code: 200,
-        data: stores,
+    return res.status(200).json({
+        data: stores
     })
-
-    return
 }
+
 export async function updateStore(req: Request, res: Response) {
     const targetId = req.params.storeId
 
-    if (targetId == undefined) {
-        res.status(400).json({
-            code: 400,
-            message: "매장의 id를 지정해주세요."
-        })
-        return
-    }
-
     const { name, description, zip_code, address, detail_address } = req.body
 
+    //field가 모두 채워지지 않았으면 reject
     if ((name && description && zip_code && detail_address) == undefined) {
-        res.status(400).json({
-            code: 400,
+        return res.status(400).json({
+            error: "required filed is not provided",
             message: "입력되지 않은 필드가 존재합니다."
         })
-        return
     }
 
-    const targetStore = await Store.findOne({
-        where: {
-            id: targetId,
-            buser_id: req.session.buser.id
+    try {
+        const targetStore = await Store.findOne({
+            where: {
+                id: targetId,
+                buser_id: req.session.buser.id
+            }
+        })
+
+        //store를 찾을 수 없으면 reject
+        if (!targetStore) {
+            return res.status(404).json({
+                error: "Not Found",
+                message: "매장을 찾을 수 없습니다."
+            })
         }
-    })
 
-    if (targetStore == null) {
-        res.status(404).json({
-            code: 404,
-            message: "매장을 찾을 수 없습니다."
-        })
-        return
-    }
-
-    if (targetStore.getDataValue("registered") == false) {
-        res.status(400).json({
-            code: 404,
-            message: "생성 보류중인 매장입니다."
-        })
-        return
-    }
-
-    targetStore.update({
-        name,
-        description,
-        zip_code,
-        address,
-        detail_address
-    })
-        .then((updatedStore) => {
-            res.status(200).json({
-                code: 200,
-                message: "매장 정보가 성공적으로 업데이트 됐습니다."
+        //Mufi에서 승인만 나고 등록되지 않은 store를 update하려고 한다면 reject
+        if (targetStore.get("registered") == false) {
+            return res.status(400).json({
+                error: "Bad Request",
+                message: "생성 보류중인 매장입니다."
             })
+        }
+
+        const updatedStore = await targetStore.update({
+            name,
+            description,
+            zip_code,
+            address,
+            detail_address
         })
-        .catch(err => {
-            res.status(500).json({
-                code: 500,
-                message: "매장 정보를 업데이트하는 도중에 알 수 없는 문제가 발생했습니다."
-            })
+
+        return res.status(200).json({
+            data: updatedStore,
         })
+
+    } catch (err) {
+        return res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
+    }
 }
 
-//delete store
 export async function deleteStore(req: Request, res: Response) {
     const targetId = req.params.storeId
 
-    if (targetId == undefined) {
-        res.status(400).json({
-            code: 400,
-            message: "삭제할 매장의 id가 지정되지 않았습니다."
-        })
-        return
-    }
-
-    //request를 보낸 user의 store중, target id와 일치하는 매장을 찾는다.
-    const targetStore = await Store.findOne({
-        where: {
-            id: targetId,
-            buser_id: req.session.buser.id
-        }
-    })
-
-    if (targetStore == null) {
-        res.status(404).json({
-            code: 404,
-            message: "매장을 찾지 못했습니다.",
-            info: targetId + req.session.buser.id
-        })
-        return
-    }
-
-    targetStore.destroy()
-        .then(() => {
-            res.status(200).json({
-                code: 200,
-                message: "매장이 정상적으로 삭제되었습니다."
-            })
-        })
-        .catch(err => {
-            res.status(500).json({
-                code: 500,
-                message: "매장을 삭제하는 도중 알 수 없는 문제가 발생했습니다."
-            })
-        })
-}
-
-//get order from store
-export async function getOrderOfStore(req: Request, res: Response) {
-    const targetStoreId = req.query.store_id
-
-    if (targetStoreId == undefined) {
-        res.status(400).json({
-            code: 400,
-            message: "store id가 지정되지 않았습니다."
-        })
-        return
-    }
-
-    Order.findAll({
-        where: {
-            store_id: targetStoreId,
-        }
-    })
-        .then((orders) => {
-            res.status(200).json({
-                code: 200,
-                data: {
-                    orders
+    try {
+        const targetStore = await Store.findOne({
+            where: {
+                id: targetId,
+                buser_id: req.session.buser.id,
+                updatedAt: {
+                    [Op.ne]: null,
                 }
-            })
+            }
         })
-        .catch(err => {
-            throw err
-            res.status(500).json({
-                code: 500,
-                message: "server internel error"
+
+        //store를 찾을 수 없으면 reject
+        if (!targetStore) {
+            return res.status(404).json({
+                error: "Not Found",
+                message: "매장을 찾을 수 없습니다."
             })
+        }
+
+        await targetStore.destroy()
+
+        return res.status(204).json({
+            message: "매장이 정상적으로 삭제되었습니다."
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            error: "server error",
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
+    }
 }
-
-// export async function createPhoto(req : Request, res: Response){
-//     const targetStoreId = req.params.store_id
-
-//     const image: UploadedFile = req.files.image as UploadedFile
-
-//     image.mv()
-// }
 

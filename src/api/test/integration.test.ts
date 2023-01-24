@@ -143,7 +143,7 @@ if (server.listening) {
                     //middleware에 걸려 redirect되지 않았으며
                     expect("Location", "/api/buser/stores")
                     //200의 status code를 받아 성공적으로 매장 생성을 확인
-                    expect(res).to.have.status(200)
+                    expect(res).to.have.status(201)
 
                     done()
                 })
