@@ -11,8 +11,8 @@ schema
     .has().digits()
     .has().not().spaces()
 
-export const passwordIsValidate = (password: string): boolean | any[] => {
-    return schema.validate(password)
+export const passwordIsValidate = (password: string): boolean => {
+    return schema.validate(password) as boolean;
 }
 
 export const usernameIsValidate = (username: string): boolean => {
