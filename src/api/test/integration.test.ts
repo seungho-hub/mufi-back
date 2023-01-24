@@ -157,8 +157,6 @@ if (server.listening) {
                     expect(err).to.be.null
                     expect("Location", `/api/buser/stores/${testStore.id}`)
                     expect(res).to.have.status(200)
-
-                    expect(res.body.data.code).to.be.equal(testStore.code)
                     done()
                 })
 

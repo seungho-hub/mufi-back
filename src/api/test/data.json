@@ -11,7 +11,7 @@
 
         "name": "test_name",
         "description": "test_description",
-        "zip_code": "test",
+        "zip_code": "12345",
         "address": "test_address",
         "detail_address": "test_detail_address"
     },
