@@ -30,10 +30,10 @@ export const storeAgent = async (req: Request, res: Response) => {
 
     if (req.method === "POST") {
         //request body에서 stroe identifier number를 가져옵니다.
-        const inputedSin = req.body.sin
+        const sin = req.body.sin
 
         //exception case1.
-        if (inputedSin == undefined) {
+        if (sin == undefined) {
             res.status(400).json({
                 code: 400,
                 message: "sin이 입력되지 않았습니다."
@@ -42,11 +42,9 @@ export const storeAgent = async (req: Request, res: Response) => {
             return
         }
 
-        const encrypted_sin = md5(inputedSin)
-
         Sin.findOne({
             where: {
-                encrypted_sin,
+                sin
             }
         })
             .then((matched_sin) => {
