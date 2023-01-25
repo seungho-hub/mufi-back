@@ -250,7 +250,7 @@ if (server.listening) {
                 .end((err, res) => {
                     expect(err).to.be.null
                     expect("Location", "/api/buser/sin")
-                    expect(res).to.have.status(200)
+                    expect(res).to.have.status(201)
                     sin = res.body.data
                     done()
                 })
