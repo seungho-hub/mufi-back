@@ -27,7 +27,7 @@ import session from "express-session"
 import dbConfig from "./api/config/DBConfig"
 import createSessionConfig from "./api/config/SessionConfig"
 const MySQLStore = require("express-mysql-session")(session)
-import { bUserAuthenticated } from "./api/auth/buser/middleware"
+import { bUserAuthenticationMiddleware } from "./api/auth/buser/middleware"
 import { userAuthenticated } from "./api/auth/user/middleware"
 import { checkStoreAgent, checkUserAgent } from "./api/auth/kiosk/middleware"
 
@@ -84,9 +84,9 @@ app.use("/api/user/payment", PaymentRouter)
 //buser routing
 
 //for home
-app.use("/buser", bUserAuthenticated)
+app.use("/buser", bUserAuthenticationMiddleware)
 //for api
-app.use("/api/buser", bUserAuthenticated)
+app.use("/api/buser", bUserAuthenticationMiddleware)
 app.use("/auth/buser", authBUser)
 app.use("/buser", bUserRouter)
 
