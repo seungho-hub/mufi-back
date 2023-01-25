@@ -19,12 +19,15 @@ export const generateSin = async (req: Request, res: Response) => {
 
         const generatedSin = await Sin.create({ store_id, sin })
 
+        const publicSinInfo = generatedSin.toJSON()
+        delete publicSinInfo.id
+        delete publicSinInfo.store_id
+
         return res.status(201).json({
-            data: generatedSin,
+            data: publicSinInfo,
             messsage: "성공적으로 sin이 발급되었습니다."
         })
     } catch (err) {
-        console.log(err)
         return res.status(500).json({
             error: "server error",
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
