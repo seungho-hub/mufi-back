@@ -164,13 +164,14 @@ export const signup = async (req: Request, res: Response) => {
 export const signout = (req: Request, res: Response) => {
     req.session.destroy((err) => {
         if (err) {
-            res.status(400).json({
-                message: "잘못된 요청입니다."
+            res.status(500).json({
+                error: "server error",
+                message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
             })
         }
     })
 
-    res.clearCookie("connect.sid")
+    res.clearCookie("mufi.sid")
 
     res.status(200).json({
         message: "성공적으로 로그아웃 되었습니다."

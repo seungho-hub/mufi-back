@@ -1,5 +1,5 @@
 {
-    "testUser": {
+    "testBuser": {
         "id": "",
         "username": "test_username",
         "email": "test_email@gmail.com",
@@ -29,5 +29,11 @@
         "price": 20000,
         "description": "test_description",
         "image": "./views/resources/1.png"
+    },
+    "testUser": {
+        "username": "test_username",
+        "email": "test_email@gmail.com",
+        "password1": "testStrongPassword123",
+        "password2": "testStrongPassword123"
     }
 }

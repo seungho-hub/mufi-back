@@ -17,8 +17,10 @@
         "watch-ts": "tsc --watch"
     },
     "dependencies": {
+        "@types/bcrypt": "^5.0.0",
         "argon2": "^0.30.3",
         "axios": "^0.27.2",
+        "bcrypt": "^5.1.0",
         "chai": "^4.3.6",
         "chai-http": "^4.3.0",
         "dotenv": "^16.0.1",

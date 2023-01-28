@@ -14,87 +14,74 @@ import md5 from "md5"
 export const storeAgent = async (req: Request, res: Response) => {
     //if request with GET method, render agent form
     if (req.method === "GET") {
-        res.render("kiosk/wait-store")
-
-        return
+        return res.render("kiosk/wait-store")
     }
 
     //if request with delete method, signout from agent
     if (req.method === "DELETE") {
-        req.session.kiosk = undefined
+        req.session.destroy((err) => {
+            if (err) {
+                res.status(500).json({
+                    error: "server error",
+                    message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+                })
+            }
+        })
 
-        res.redirect("/auth/kiosk/agent-store")
+        res.clearCookie("mufi.sid")
 
-        return
+        return res.status(200).json({
+            message: "성공적으로 store의 권한을 제거했습니다."
+        })
     }
 
     if (req.method === "POST") {
-        //request body에서 stroe identifier number를 가져옵니다.
-        const sin = req.body.sin
+        try {
+            //request body에서 stroe identifier number를 가져옵니다.
+            const sin = req.body.sin
 
-        //exception case1.
-        if (sin == undefined) {
-            res.status(400).json({
-                code: 400,
-                message: "sin이 입력되지 않았습니다."
-            })
-
-            return
-        }
-
-        Sin.findOne({
-            where: {
-                sin
-            }
-        })
-            .then((matched_sin) => {
-                //exception case2.
-                //입력한 sin이 sin table에 존재하지 않는다면
-                //예를 들어 buser가 sin을 발급하고 무효화했거나, 5분이 초과되어 제거된 경우가 이에 해당됩니다.
-                if (matched_sin == null) {
-                    res.status(400).json({
-                        code: 400,
-                        message: "유효하지 않은 sin입니다."
-                    })
-
-                    return
-                }
-
-
-                //kiosk client가 session을 가지고있지 않다면, 부여한다.
-                //아래 authorization을 부여할때 undefined error를 방지.
-                if (req.session.kiosk == undefined) {
-                    req.session.kiosk = {
-                        store_id: undefined,
-                        user_id: undefined
-                    }
-                }
-
-                //store authorization을 부여한다.
-                req.session.kiosk.store_id = matched_sin.getDataValue("store_id")
-
-                matched_sin.destroy()
-                //agent를 생성한다. 
-                return Agent.findOrCreate({
-                    where: {
-                        store_id: req.session.kiosk.store_id
-                    }
+            //exception case1.
+            if (!sin) {
+                res.status(400).json({
+                    code: 400,
+                    message: "sin이 입력되지 않았습니다."
                 })
-            })
-            //sin의 유효성을 확인하는 위의 과정이 문제없이 종료된경우
-            .then(() => {
 
-                res.redirect("/auth/kiosk/agent-user")
-            })
-            //sin의 유효성을 확인하는 위의 과정 중 문제가 발생했을 경우
-            .catch((err) => {
-                if (err) {
-                    res.status(500).json({
-                        code: 500,
-                        message: "sin을 확인하는 도중에 알 수 없는 문제가 발생했습니다."
-                    })
+                return
+            }
+
+            const matchedSin = await Sin.findOne({ where: { sin } })
+
+            //exception case2.
+            if (!matchedSin) {
+                return res.status(404).json({
+                    err: "Not Found",
+                    message: "유효하지 않은 sin입니다."
+                })
+            }
+
+            req.session.kiosk = req.session.kiosk || { store_id: undefined, user_id: undefined }
+
+            //store authorization을 부여한다.
+            req.session.kiosk.store_id = matchedSin.get("store_id") as string
+
+            await matchedSin.destroy()
+            //agent를 생성한다. 
+            await Agent.findOrCreate({
+                where: {
+                    store_id: req.session.kiosk.store_id
                 }
             })
+
+
+            res.redirect("/auth/kiosk/agent-user")
+
+        } catch (err) {
+            res.status(500).json({
+                error: "server error",
+                message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+            })
+        }
     }
 }
 

@@ -22,7 +22,7 @@ const connection = mysql.createConnection({
 
 const testRawData = fs.readFileSync(`src/api/test/data.json`)
 
-const { testUser, testStore, updateStore, testMenu } = JSON.parse(testRawData.toString())
+const { testBuser, testStore, updateStore, testMenu, testUser } = JSON.parse(testRawData.toString())
 
 const buserAgent: ChaiHttp.Agent = chai.request.agent(server);
 const kioskAgent: ChaiHttp.Agent = chai.request.agent(server);
@@ -39,7 +39,7 @@ if (server.listening) {
         before(() => {
             //before start test, delete buser also columns related buser
             //test 시작 전에 지우는 이유는, test 후에 test data로 
-            connection.query(`delete from busers where username="${testUser.username}"`, (err) => {
+            connection.query(`delete from busers where username="${testBuser.username}"`, (err) => {
                 if (err) {
                     throw err
                 }
@@ -52,10 +52,10 @@ if (server.listening) {
                 .post("/auth/buser/signup")
                 .type("form")
                 .send({
-                    username: testUser.username,
-                    email: testUser.email,
-                    password1: testUser.password,
-                    password2: testUser.password
+                    username: testBuser.username,
+                    email: testBuser.email,
+                    password1: testBuser.password,
+                    password2: testBuser.password
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
@@ -70,8 +70,8 @@ if (server.listening) {
                 .post("/auth/buser/signin")
                 .type("form")
                 .send({
-                    email: testUser.email,
-                    password: testUser.password
+                    email: testBuser.email,
+                    password: testBuser.password
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
@@ -107,7 +107,7 @@ if (server.listening) {
                     expect(res).to.have.status(200)
 
                     //res.body.data will be buser object
-                    testUser.id = res.body.data.id
+                    testBuser.id = res.body.data.id
                     done()
                 })
         })
@@ -115,7 +115,7 @@ if (server.listening) {
         //Create store
         step("5. create store", (done) => {
             //1. 먼저 mufi 측에서 store를 id, code, buser_id만 채워서 생성한 후 code를 buser실제 사용자에게 알려준다.
-            const registerStoreQ = `INSERT INTO stores(id, code, buser_id) VALUES('${testStore.id}', '${testStore.code}', '${testUser.id}')`
+            const registerStoreQ = `INSERT INTO stores(id, code, buser_id) VALUES('${testStore.id}', '${testStore.code}', '${testBuser.id}')`
 
             connection.query(registerStoreQ, (err) => {
                 if (err) {
@@ -252,6 +252,47 @@ if (server.listening) {
                     expect("Location", "/api/buser/sin")
                     expect(res).to.have.status(201)
                     sin = res.body.data.sin
+                    done()
+                })
+        })
+    })
+
+    describe("User", () => {
+        connection.query(`delete from users where email="${testUser.email}"`, (err) => {
+            if (err) {
+                throw err
+            }
+        })
+        step("1. signup", (done) => {
+            userAgent
+                .post("/auth/user/signup")
+                .type("form")
+                .send({
+                    username: testUser.username,
+                    email: testUser.email,
+                    password1: testUser.password1,
+                    password2: testUser.password2,
+                })
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res).to.have.status(201)
+                    done()
+                })
+        })
+
+        //test_buser로 로그인한다.
+        step("2. signin", (done) => {
+            userAgent
+                .post("/auth/user/signin")
+                .type("form")
+                .send({
+                    email: testUser.email,
+                    password: testUser.password1
+                })
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res).to.have.status(200)
+                    expect("Location", "/buser")
                     done()
                 })
         })

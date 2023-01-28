@@ -4,65 +4,11 @@ import { Request, Response } from "express"
 import dotenv from "dotenv"
 dotenv.config()
 
-import Agent from "../../models/Agent"
-import User from "../../models/User"
-import Payment from "../../models/Payment"
+import Agent from "../../../models/Agent"
+import User from "../../../models/User"
+import Payment from "../../../models/Payment"
 import { Optional } from "sequelize";
 
-const Errors = {
-    getProfileError: new Error("failed get profile from api server")
-}
-
-//**specific exception cases
-//--exception case1. store가 sin을 생성하고 입력해 화성화시킨 상태가 아닐때 그 store_id를 지정해서 agent를 요청할 수 없다.
-//--exception case2. user A가 agent를 사용하고 있을 때, user B가 agent를 요청한다면, 거부해야한다. 그 사람이 kiosk device앞에 있다면 충분히 로그아웃 할 수 있을 것.
-export async function requestAgent(req: Request, res: Response) {
-    const targetStoreId = req.query.store_id
-
-    const targetAgent = await Agent.findOne({
-        where: {
-            store_id: targetStoreId,
-        }
-    })
-
-    //exception case1.
-    if (targetAgent == undefined) {
-        res.status(404).json({
-            code: 404,
-            message: "부스가 활성화된 상태가 아닙니다."
-        })
-
-        return
-    }
-
-
-    //exception case2.
-    if (targetAgent.get("user_id")) {
-        res.status(404).json({
-            code: 404,
-            message: "다른 사용자가 사용중인 부스입니다."
-        })
-
-        return
-    }
-
-    targetAgent.update({
-        user_id: req.session.user.id
-    })
-        .then(() => {
-            res.status(200).json({
-                code: 200,
-                mssage: "권한 위임요청완료",
-
-            })
-        })
-        .catch(err => {
-            res.status(500).json({
-                code: 500,
-                message: "알 수 없는 에러가 발생했습니다."
-            })
-        })
-}
 
 export async function renderSignin(req: Request, res: Response) {
     res.render("user/signin")
@@ -74,7 +20,9 @@ export async function signout(req: Request, res: Response) {
         }
     })
 
-    res.redirect("/auth/signin/user")
+    res.status(200).json({
+        message: "성공적으로 로그아웃 되었습니다."
+    })
 }
 
 export async function oauthSignin(req: Request, res: Response) {
@@ -88,59 +36,61 @@ export async function oauthSinginCallback(req: Request, res: Response) {
     const { code } = req.query
     const provider = req.params.provider
 
-
-    //oauth로 사용하지 않는 provider를 parameter로 넘긴 경우
-    if (Object.keys(api_info).includes(provider) == false) {
-        res.status(400).json({
-            code: 400,
-            message: "지원하지 않는 서비스입니다."
-        })
-
-        return
-    }
-
-    //if code not sended as parameter
-    // will be one of the cases below
-    // 1. client try to access /auth/google/callback directly withour pass through conscent screen
-    // 2. user failed authentication from oauth server  
-    if (code == undefined) {
-        res.status(401).json({
-            code: 401,
-            message: "해당 서비스 인증에 실패했습니다."
-        })
-
-        return
-    }
-
-    //get user profile from oauth server
-    let profile = await getUserProfile({ code: code.toString(), provider })
-
-    //잘못된 접근이면 이전 과정에서 error가 발생하기 떄문에 id로 체크해도 문제가 되지 않는다.
-    const existUser = await User.findOne({
-        where: {
-            id: profile.id
+    try {
+        //oauth로 사용하지 않는 provider를 parameter로 넘긴 경우
+        if (Object.keys(api_info).includes(provider) == false) {
+            return res.status(400).json({
+                code: 400,
+                message: "지원하지 않는 서비스입니다."
+            })
         }
-    })
 
-    if (existUser) {
-        req.session.user = existUser
-        res.redirect("/user")
-    } else {
-        User.create({
-            id: profile.id,
-            username: profile.username,
-            pfp: profile.pfp,
+        //if code not sended as parameter
+        // will be one of the cases below
+        // 1. client try to access /auth/google/callback directly withour pass through conscent screen
+        // 2. user failed authentication from oauth server  
+        if (!code) {
+            return res.status(401).json({
+                code: 401,
+                message: "해당 서비스 인증에 실패했습니다."
+            })
+        }
+
+        //get user profile from oauth server
+        let profile = await getUserProfile({ code: code.toString(), provider })
+
+        //잘못된 접근이면 이전 과정에서 error가 발생하기 떄문에 id로 체크해도 문제가 되지 않는다.
+        const existUser = await User.findOne({
+            where: {
+                id: profile.id
+            }
         })
-            .then((created_user) => {
-                req.session.user = created_user
-                res.redirect("/user")
+
+        if (existUser) {
+            req.session.user = existUser
+            return res.redirect("/user")
+        } else {
+            const created_user = await User.create({
+                id: profile.id,
+                username: profile.username,
+                pfp: profile.pfp,
+                email: profile.email,
+                //sequelize에서 field가 null인 경우 validation을 ignore하는 기능을 업데이트하지 않기로 결정됨.
+                //validation마다 pass를 걸어 지저분한 코드를 만드는 것보다 password를 입력해주는 편이 낫다고 판단
+                //issue 9143 : https://github.com/sequelize/sequelize/issues/9143
+                //!!대신 local signin에서 provider가 'local'인 경우만 허용해야한다. 이를 무시하면 provider가 가지고있던 user의 email과 이 password만으로 signin할 수 있게된다.
+                password: "SnsSignin1234",
+                provider
             })
-            .catch(err => {
-                res.status(400).json({
-                    code: 400,
-                    message: "oauth 인증에 실패했습니다."
-                })
-            })
+
+
+            req.session.user = created_user
+            return res.redirect("/user")
+        }
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
     }
 }
 
