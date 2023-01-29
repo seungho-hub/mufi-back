@@ -13,15 +13,6 @@ const User = sequelize.define("User", {
         primaryKey: true,
         unique: true,
     },
-    email: {
-        type: DataTypes.STRING(320),
-        unique: true,
-        validate: {
-            isEmail: {
-                msg: "email 형식이 올바르지 않습니다."
-            }
-        }
-    },
     username: {
         //korean 12lenght username => 36byte
         type: DataTypes.STRING(30),
@@ -53,6 +44,14 @@ const User = sequelize.define("User", {
         type: DataTypes.STRING,
         allowNull: true
     },
+    tel: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+            isNumeric: true,
+            len: [8, 8]
+        }
+    },
     pfp: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -64,11 +63,6 @@ const User = sequelize.define("User", {
         validate: {
             isIn: [["kakao", "local"]]
         }
-    },
-    createdAt: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-        allowNull: false,
     },
 }, {
     hooks: {

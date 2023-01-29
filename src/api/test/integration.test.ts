@@ -53,7 +53,7 @@ if (server.listening) {
                 .type("form")
                 .send({
                     username: testBuser.username,
-                    email: testBuser.email,
+                    tel: testBuser.tel,
                     password1: testBuser.password,
                     password2: testBuser.password
                 })
@@ -70,7 +70,7 @@ if (server.listening) {
                 .post("/auth/buser/signin")
                 .type("form")
                 .send({
-                    email: testBuser.email,
+                    username: testBuser.username,
                     password: testBuser.password
                 })
                 .end((err, res) => {
@@ -258,7 +258,7 @@ if (server.listening) {
     })
 
     describe("User", () => {
-        connection.query(`delete from users where email="${testUser.email}"`, (err) => {
+        connection.query(`delete from users where tel="${testUser.tel}"`, (err) => {
             if (err) {
                 throw err
             }
@@ -269,7 +269,7 @@ if (server.listening) {
                 .type("form")
                 .send({
                     username: testUser.username,
-                    email: testUser.email,
+                    tel: testUser.tel,
                     password1: testUser.password1,
                     password2: testUser.password2,
                 })
@@ -286,7 +286,7 @@ if (server.listening) {
                 .post("/auth/user/signin")
                 .type("form")
                 .send({
-                    email: testUser.email,
+                    username: testUser.username,
                     password: testUser.password1
                 })
                 .end((err, res) => {

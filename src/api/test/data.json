@@ -2,13 +2,12 @@
     "testBuser": {
         "id": "",
         "username": "test_username",
-        "email": "test_email@gmail.com",
+        "tel": "44982128",
         "password": "teststrongPassword123"
     },
     "testStore": {
         "id": "test_id",
         "code": "test_code",
-
         "name": "test_name",
         "description": "test_description",
         "zip_code": "12345",
@@ -32,7 +31,7 @@
     },
     "testUser": {
         "username": "test_username",
-        "email": "test_email@gmail.com",
+        "tel": "44982128",
         "password1": "testStrongPassword123",
         "password2": "testStrongPassword123"
     }

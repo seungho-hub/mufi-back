@@ -7,47 +7,42 @@ import { ValidationError } from "sequelize"
 
 export const localSignup = async (req: Request, res: Response) => {
     try {
-        const { username, email, password1, password2 } = req.body
+        const { username, tel, password1, password2 } = req.body
 
         if (password1 != password2) {
             return res.status(400).json({
-                error: "password mismatch",
                 message: "비밀번호 확인이 일치하지 않습니다."
             })
         }
 
-        if (await User.findOne({ where: { email } })) {
+        if (await User.findOne({ where: { tel } })) {
             return res.status(409).json({
-                error: "conflicted email",
-                message: "해당 이메일로 등록된 사용자가 존재합니다."
+                message: "해당 전화번호로 등록된 사용자가 존재합니다."
             })
         }
 
         const uuid = v4()
 
-        await User.create({
+        const createdUser = await User.create({
             id: uuid,
-            email,
+            tel,
             username,
             password: password1,
             provider: "local"
         })
 
-        const createdUser = await User.findOne({
-            where: {
-                id: uuid,
-            },
-            attributes: {
-                exclude: ["encrypted_password", "createdAt", "updatedAt"]
-            }
-        })
+        const publicUserInfo = createdUser.toJSON()
+
+        delete publicUserInfo.createdAt
+        delete publicUserInfo.updatedAt
+        delete publicUserInfo.provider
+        delete publicUserInfo.encrypted_password
 
         return res.status(201).json({
             data: {
-                user: createdUser,
+                user: publicUserInfo
             },
         })
-
     } catch (err) {
         if (err instanceof ValidationError) {
             return res.status(400).json({
@@ -63,20 +58,15 @@ export const localSignup = async (req: Request, res: Response) => {
 
 export const localSignin = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body
+        const { username, password } = req.body
 
-        if (!email || !password) {
+        if (!username || !password) {
             return res.status(400).json({
                 message: "입력되지 않은 필드가 존재합니다."
             })
         }
 
-        const user = await User.findOne({
-            where: {
-                email,
-                provider: "local"
-            }
-        })
+        const user = await User.findOne({ where: { username, provider: "local" } })
 
         if (!user || !await bcrypt.compare(password, user.get("encrypted_password"))) {
             return res.status(401).json({
@@ -91,7 +81,6 @@ export const localSignin = async (req: Request, res: Response) => {
         })
     } catch (err) {
         return res.status(500).json({
-            error: "server error",
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }

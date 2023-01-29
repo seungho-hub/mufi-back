@@ -16,7 +16,7 @@ authUser.post("/signup", localSignup)
 authUser.get("/signin/:provider", oauthSignin)
 authUser.get("/signin/:provider/callback", oauthSinginCallback)
 
-authUser.delete("signout", signout)
+authUser.delete("/signout", signout)
 
 //agent
 authUser.get("/agent", userAuthenticated, requestAgent)
