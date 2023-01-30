@@ -1,15 +1,14 @@
 import { Request, Response } from "express";
 import Sin from "../../models/Sin"
 import md5 from "md5"
-
-const gpc = require("generate-pincode")
+import { generatePin } from "../../../lib/generator/pin"
 
 export const generateSin = async (req: Request, res: Response) => {
     try {
         const store_id = req.app.locals.storeId
 
         //generate Store Identifier Number
-        const sin = gpc(6)
+        const sin = generatePin(6)
 
         const existSin = await Sin.findOne({ where: { store_id } })
 
