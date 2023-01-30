@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
-import md5 from "md5"
 import Uin from "../../models/Uin";
 import { generatePin } from "../../../lib/generator/pin"
 
 export const generateUin = async (req: Request, res: Response) => {
     //generate Store Identifier Number
     const uin = generatePin(6)
-    const encrypted_uin = md5(uin)
 
     const existSin = await Uin.findOne({
         where: {
@@ -25,7 +23,7 @@ export const generateUin = async (req: Request, res: Response) => {
 
     Uin.create({
         user_id: req.session.user.id,
-        encrypted_uin
+        uin
     })
         .then((createdUin) => {
             //5분 뒤에 제거
