@@ -16,28 +16,25 @@ export const grantStoreAuthority = async (req: Request, res: Response) => {
 
         const matchedSin = await Sin.findOne({ where: { sin } })
 
-        //해당 sin을 찾을 수 없다면 reject
+        //해당 sin을 찾을 수 없다면 reject 
         if (!matchedSin) {
             return res.status(404).json({
                 message: "유효하지 않은 sin입니다."
             })
         }
 
+        const store_id = matchedSin.get('store_id') as string
+
+        //agent를 생성한다, 이미 존재한다면 생성하지 않음.
+        await Agent.findOrCreate({ where: { store_id } })
+
+        await matchedSin.destroy()
+
         //session을 부여한다.
         req.session.kiosk = req.session.kiosk || { store_id: undefined, user_id: undefined }
 
         //store authorization을 부여한다.
-        req.session.kiosk.store_id = matchedSin.get("store_id") as string
-
-        await matchedSin.destroy()
-
-        //agent를 생성한다.
-        //이미 존재한다면 그냥 사용
-        await Agent.findOrCreate({
-            where: {
-                store_id: req.session.kiosk.store_id
-            }
-        })
+        req.session.kiosk.store_id = store_id
 
         return res.redirect("/auth/kiosk/agent-user")
     } catch (err) {
