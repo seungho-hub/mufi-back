@@ -19,7 +19,7 @@ authUser.get("/signin/:provider/callback", oauthSinginCallback)
 authUser.delete("/signout", signout)
 
 //agent
-authUser.get("/agent", userAuthenticated, requestAgent)
+authUser.put("/agent", userAuthenticated, requestAgent)
 
 
 
