@@ -6,7 +6,6 @@ import * as dotenv from "dotenv"
 dotenv.config()
 import server from '../../server'
 import fs from "fs"
-import { RowDataPacket } from "mysql2/typings/mysql"
 
 chai.use(chaiHttp)
 
@@ -34,19 +33,8 @@ const userAgent: ChaiHttp.Agent = chai.request.agent(server);
 if (server.listening) {
     let sin: String;
     let uin: String;
+
     describe("Buser", () => {
-
-        before(() => {
-            //before start test, delete buser also columns related buser
-            //test 시작 전에 지우는 이유는, test 후에 test data로 
-            connection.query(`delete from busers where username="${testBuser.username}"`, (err) => {
-                if (err) {
-                    throw err
-                }
-            })
-        })
-
-        //test_buser로 회원가입한다.
         step("1. signup", (done) => {
             buserAgent
                 .post("/auth/buser/signup")
@@ -64,7 +52,6 @@ if (server.listening) {
                 })
         })
 
-        //test_buser로 로그인한다.
         step("2. signin", (done) => {
             buserAgent
                 .post("/auth/buser/signin")
@@ -81,40 +68,31 @@ if (server.listening) {
                 })
         })
 
-        //access home with test_buser
-        //check authentication after signin
         step("3. access home", (done) => {
             buserAgent
                 .get("/buser/home")
                 .end((err, res) => {
                     expect(err).to.be.null
-                    //authenticationn에 성공해 redirect되지 않음
-                    expect(res).not.to.redirect
+                    expect(res.redirects).to.be.empty
                     expect(res).to.have.status(200)
-
                     done()
                 })
         })
 
-        //we do not know id of buser so,
-        //test get buser and set save buser id
         step("4. get self", (done) => {
             buserAgent
                 .get("/api/buser/self")
                 .end((err, res) => {
                     expect(err).to.be.null
-                    expect(res).not.to.redirect
+                    expect(res.redirects).to.be.empty
                     expect(res).to.have.status(200)
 
-                    //res.body.data will be buser object
                     testBuser.id = res.body.data.id
                     done()
                 })
         })
 
-        //Create store
         step("5. create store", (done) => {
-            //1. 먼저 mufi 측에서 store를 id, code, buser_id만 채워서 생성한 후 code를 buser실제 사용자에게 알려준다.
             const registerStoreQ = `INSERT INTO stores(id, code, buser_id) VALUES('${testStore.id}', '${testStore.code}', '${testBuser.id}')`
 
             connection.query(registerStoreQ, (err) => {
@@ -125,7 +103,6 @@ if (server.listening) {
                 return
             })
 
-            //request create store with code which provided from Mufi
             buserAgent
                 .post("/api/buser/stores")
                 .type("form")
@@ -138,23 +115,21 @@ if (server.listening) {
                     detail_address: testStore.detail_address,
                 })
                 .end((err, res) => {
-                    //requestr중 error가 없고
                     expect(err).to.be.null
-                    //middleware에 걸려 redirect되지 않았으며
+                    expect(res.redirects).to.be.empty
                     expect("Location", "/api/buser/stores")
-                    //200의 status code를 받아 성공적으로 매장 생성을 확인
                     expect(res).to.have.status(201)
 
                     done()
                 })
         })
 
-        //Read store
         step("6. get store", (done) => {
             buserAgent
                 .get(`/api/buser/stores/${testStore.id}`)
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect("Location", `/api/buser/stores/${testStore.id}`)
                     expect(res).to.have.status(200)
                     done()
@@ -162,12 +137,12 @@ if (server.listening) {
 
         })
 
-        //Read stores
         step("7. gets store", (done) => {
             buserAgent
                 .get("/api/buser/stores")
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
 
@@ -175,7 +150,6 @@ if (server.listening) {
                 })
         })
 
-        //Update store
         step("8. update store", (done) => {
             buserAgent
                 .put(`/api/buser/stores/${testStore.id}`)
@@ -188,6 +162,7 @@ if (server.listening) {
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
                     done()
@@ -207,6 +182,7 @@ if (server.listening) {
                 .end((err, res) => {
                     expect(err).to.be.null
                     expect("Location", "/api/buser/stores")
+                    expect(res.redirects).to.be.empty
                     expect(res).to.have.status(201)
                     testMenu.id = res.body.data.id
 
@@ -214,13 +190,12 @@ if (server.listening) {
                 })
         })
 
-        //we do not know id of created menu
-        //get menu and save id of created menu just before
         step("10. get menu", (done) => {
             buserAgent
                 .get(`/api/buser/stores/${testStore.id}/menus/${testMenu.id}`)
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
 
@@ -233,6 +208,7 @@ if (server.listening) {
                 .get(`/api/buser/stores/${testStore.id}/menus/${testMenu.id}`)
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect("Location", "/api/buser/stores")
                     expect(res).to.have.status(200)
 
@@ -249,6 +225,7 @@ if (server.listening) {
                 .post(`/api/buser/stores/${testStore.id}/sin`)
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect("Location", "/api/buser/sin")
                     expect(res).to.have.status(201)
                     sin = res.body.data.sin
@@ -258,11 +235,6 @@ if (server.listening) {
     })
 
     describe("User", () => {
-        connection.query(`delete from users where tel="${testUser.tel}"`, (err) => {
-            if (err) {
-                throw err
-            }
-        })
         step("1. signup", (done) => {
             userAgent
                 .post("/auth/user/signup")
@@ -275,12 +247,12 @@ if (server.listening) {
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect(res).to.have.status(201)
                     done()
                 })
         })
 
-        //test_buser로 로그인한다.
         step("2. signin", (done) => {
             userAgent
                 .post("/auth/user/signin")
@@ -291,6 +263,19 @@ if (server.listening) {
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
+                    expect(res).to.have.status(200)
+                    expect("Location", "/buser")
+                    done()
+                })
+        })
+
+        step("3. access home", (done) => {
+            userAgent
+                .get("/user")
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect(res).to.have.status(200)
                     expect("Location", "/buser")
                     done()
@@ -299,7 +284,7 @@ if (server.listening) {
     })
 
     describe("Kiosk", () => {
-        step("1.input sin", (done) => {
+        step("1.grant store Authority", (done) => {
             kioskAgent
                 .post("/auth/kiosk/agent-store")
                 .type("form")
@@ -308,12 +293,98 @@ if (server.listening) {
                 })
                 .end((err, res) => {
                     expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
                     expect("Location", "/auth/kiosk/agent-user")
                     expect(res).to.have.status(200)
                     done()
                 })
         })
+
+        step("2.[User] grant user Authority", (done) => {
+            userAgent
+                .put("/auth/user/agent")
+                .query({ store_id: testStore.id })
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
+                    expect(res).to.have.status(200)
+                    done()
+                })
+        })
+
+        step("3.grant user Authority", (done) => {
+            kioskAgent
+                .post("/auth/kiosk/agent-user")
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
+                    expect(res).to.have.status(200)
+                    done()
+                })
+        })
+
+        step("4. access home", (done) => [
+            kioskAgent
+                .get("/kiosk")
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
+                    expect(res).to.have.status(200)
+                    done()
+                })
+        ])
+
+        step("5. delete user authority", (done) => {
+            kioskAgent
+                .delete("/auth/kiosk/agent-user")
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res).to.have.status(200)
+                    expect(res.redirects).to.be.empty
+                    expect("Location", "/auth/kiosk/agent-user")
+                    done()
+                })
+        })
+
+        step("6. delete store authority", (done) => {
+            kioskAgent
+                .delete("/auth/kiosk/agent-store")
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res).to.have.status(200)
+                    expect(res.redirects).to.be.empty
+                    expect("Location", "/auth/kiosk/agent-store")
+                    done()
+                })
+        })
     })
+
+    describe("delete accounts", () => {
+        step("1. delete buser", (done) => {
+            buserAgent
+                .delete("/auth/buser")
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
+                    expect(res).to.have.status(204)
+                    expect("Location", "/auth/buser")
+                    done()
+                })
+        })
+
+        step("2. delete user", (done) => {
+            userAgent
+                .delete("/auth/user")
+                .end((err, res) => {
+                    expect(err).to.be.null
+                    expect(res.redirects).to.be.empty
+                    expect(res).to.have.status(204)
+                    expect("Location", "/auth/user")
+                    done()
+                })
+        })
+    })
+
 }
 
 
