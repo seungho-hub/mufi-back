@@ -136,3 +136,17 @@ export const signout = (req: Request, res: Response) => {
         })
     }
 }
+
+export const deleteBUser = async (req: Request, res: Response) => {
+    try {
+        await Buser.destroy({ where: { id: req.session.buser.id } })
+
+        req.session.destroy(null)
+
+        return res.status(204).end()
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
+    }
+}
