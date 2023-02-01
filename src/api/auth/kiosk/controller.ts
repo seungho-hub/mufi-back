@@ -46,22 +46,15 @@ export const grantStoreAuthority = async (req: Request, res: Response) => {
     }
 }
 
-export const renderWaitStoreAuthority = (req: Request, res: Response) => {
+export const renderWaitStoreAuthority = async (req: Request, res: Response) => {
     return res.render("kiosk/wait-store")
 }
 
-export const clearStoreAuthority = (req: Request, res: Response) => {
+export const clearStoreAuthority = async (req: Request, res: Response) => {
     try {
-        req.session.destroy((err) => {
-            if (err) {
-                res.status(500).json({
-                    error: "server error",
-                    message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
-                })
-            }
-        })
+        await Agent.destroy({ where: { store_id: req.session.kiosk.store_id } })
 
-        res.clearCookie("mufi.sid")
+        req.session.kiosk.store_id = null
 
         return res.status(200).json({
             message: "성공적으로 store의 권한을 제거했습니다."
@@ -81,12 +74,14 @@ export const renderWaitUserAuthority = async (req: Request, res: Response) => {
 
 export const clearUserAuthority = async (req: Request, res: Response) => {
     try {
-        await Agent.update({ user_id: null }, { where: { store_id: req.session.kiosk.store_id } })
+        await Agent.update({ user_id: null }, { where: { user_id: req.session.kiosk.store_id } })
+
         req.session.kiosk.user_id = null
 
         return res.status(200).json({
             message: "user의 권한을 성공적으로 제거했습니다."
         })
+
     } catch (err) {
         return res.status(500).json({
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
