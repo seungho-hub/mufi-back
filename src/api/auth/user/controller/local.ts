@@ -86,3 +86,16 @@ export const localSignin = async (req: Request, res: Response) => {
     }
 }
 
+export const deleteUser = async (req: Request, res: Response) => {
+    try {
+        await User.destroy({ where: { id: req.session.user.id } })
+
+        req.session.destroy(null)
+
+        return res.status(204).end()
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
+    }
+}

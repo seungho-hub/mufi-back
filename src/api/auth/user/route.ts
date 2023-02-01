@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { oauthSignin, oauthSinginCallback, signout, renderSignin } from './controller/sns';
-import { localSignup, localSignin } from "./controller/local"
+import { localSignup, localSignin, deleteUser } from "./controller/local"
 import { requestAgent } from "./controller/agent"
 import { userAuthenticated } from "./middleware";
 //"/auth/user/"
@@ -17,6 +17,9 @@ authUser.get("/signin/:provider", oauthSignin)
 authUser.get("/signin/:provider/callback", oauthSinginCallback)
 
 authUser.delete("/signout", signout)
+
+//delete user
+authUser.delete("/", userAuthenticated, deleteUser)
 
 //agent
 authUser.put("/agent", userAuthenticated, requestAgent)
