@@ -36,7 +36,9 @@ export const grantStoreAuthority = async (req: Request, res: Response) => {
         //store authorization을 부여한다.
         req.session.kiosk.store_id = store_id
 
-        return res.redirect("/auth/kiosk/agent-user")
+        return res.status(200).json({
+            message: "store의 권한을 성공적으로 부여받았습니다."
+        })
     } catch (err) {
         return res.status(500).json({
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
@@ -82,7 +84,9 @@ export const clearUserAuthority = async (req: Request, res: Response) => {
         await Agent.update({ user_id: null }, { where: { store_id: req.session.kiosk.store_id } })
         req.session.kiosk.user_id = null
 
-        return res.redirect("/auth/kiosk/user")
+        return res.status(200).json({
+            message: "user의 권한을 성공적으로 제거했습니다."
+        })
     } catch (err) {
         return res.status(500).json({
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
