@@ -74,7 +74,6 @@ export async function createMenu(req: Request, res: Response) {
         })
     } catch (err) {
         res.status(500).json({
-            error: "server error",
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }
@@ -109,7 +108,6 @@ export async function getMenu(req: Request, res: Response) {
         })
     } catch (err) {
         return res.status(500).json({
-            error: "server error",
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }
@@ -130,10 +128,7 @@ export async function getMenus(req: Request, res: Response) {
         },)
 
         if (!menus.length) {
-            return res.status(404).json({
-                error: "Not Found",
-                message: "상품을 찾을 수 없습니다."
-            })
+            return res.status(204).end()
         }
 
         return res.status(200).json({
@@ -142,7 +137,6 @@ export async function getMenus(req: Request, res: Response) {
         })
     } catch (err) {
         return res.status(500).json({
-            error: "server error",
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }
@@ -161,20 +155,16 @@ export async function deleteMenu(req: Request, res: Response) {
 
         if (!targetMenu) {
             return res.status(404).json({
-                error: "Not Found",
                 message: "상품을 찾을 수 없습니다."
             })
         }
 
         await targetMenu.destroy()
 
-        return res.status(204).json({
-            message: "상품이 정상적으로 삭제되었습니다."
-        })
+        return res.status(204).end()
 
     } catch (err) {
         return res.status(500).json({
-            error: "server error",
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }
