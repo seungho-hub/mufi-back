@@ -11,7 +11,7 @@ export const getPayment = async (req: Request, res: Response) => {
                 user_id: req.session.user.id,
             },
             attributes: {
-                exclude: ["toss_billing_key", "createAt", "user_id"]
+                exclude: ["toss_billing_key", "createdAt", "user_id"]
             }
         })
 
@@ -37,7 +37,7 @@ export const getPayments = async (req: Request, res: Response) => {
         const payments = await Payment.findAll({
             where: { user_id: req.session.user.id },
             attributes: {
-                exclude: ["toss_billing_key", "createAt", "user_id"]
+                exclude: ["toss_billing_key", "createdAt", "user_id"]
             }
         })
 
