@@ -21,6 +21,7 @@ import { sinRouter } from "./api/buser/routes/sin"
 import { userHomeRouter } from "./user/router"
 import { uinRouter } from "./api/user/routes/uin"
 import { PaymentRouter } from "./api/user/routes/Payment"
+import { tossRouter } from "./api/user/routes/toss"
 
 import path from "path"
 import session from "express-session"
@@ -78,6 +79,7 @@ app.use("/auth/user", authUser)
 app.use("/user", userHomeRouter)
 app.use("/api/user/uin", uinRouter)
 app.use("/api/user/payments", PaymentRouter)
+app.use("/api/user/payments/toss", tossRouter)
 
 
 
