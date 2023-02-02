@@ -77,7 +77,8 @@ app.use("/api/user", userAuthenticated)
 app.use("/auth/user", authUser)
 app.use("/user", userHomeRouter)
 app.use("/api/user/uin", uinRouter)
-app.use("/api/user/payment", PaymentRouter)
+app.use("/api/user/payments", PaymentRouter)
+
 
 
 //--------------------------------------
