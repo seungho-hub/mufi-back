@@ -74,7 +74,7 @@ export const renderWaitUserAuthority = async (req: Request, res: Response) => {
 
 export const clearUserAuthority = async (req: Request, res: Response) => {
     try {
-        await Agent.update({ user_id: null }, { where: { user_id: req.session.kiosk.store_id } })
+        const isUpdated = await Agent.update({ user_id: null }, { where: { store_id: req.session.kiosk.store_id } })
 
         req.session.kiosk.user_id = null
 
