@@ -3,4 +3,4 @@ import { order } from "../controller/order"
 
 export const orderRouter = Router()
 
-orderRouter.get("/", order)
+orderRouter.post("/", order)

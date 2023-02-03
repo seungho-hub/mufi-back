@@ -1,115 +1,73 @@
 import { Request, Response } from "express"
 import Menu from "../../../api/models/Menu"
-import User from "../../../api/models/User"
 import Payment from "../../../api/models/Payment"
 import { v4 } from "uuid"
 import Order from "../../../api/models/Order"
-import Store from "../../../api/models/Store"
 import axios from "axios"
-import { Model } from 'sequelize/types';
 
 export const order = async (req: Request, res: Response) => {
-    const menuId = req.query.menu_id
+    try {
+        const { paymentId, menuId } = req.query
 
-    if (menuId == undefined) {
-        res.status(400).json({
-            code: 400,
-            message: "메뉴가 지정되지 않았습니다."
-        })
-
-        return
-    }
-
-    const targetMenu = await Menu.findOne({ where: { id: menuId } })
-
-    if (targetMenu == null) {
-        res.status(404).send({
-            code: 404,
-            message: "등록되지 않은 메뉴입니다."
-        })
-
-        return
-    }
-
-    const paymentOfUser = await Payment.findOne({ where: { user_id: req.session.kiosk.user_id } })
-
-    if (paymentOfUser == null) {
-        res.status(404).json({
-            code: 404,
-            message: "결제수단이 등록되지 않았습니다."
-        })
-
-        return
-    }
-
-    axios({
-        method: "POST",
-        url: `https://api.tosspayments.com/v1/billing/${paymentOfUser.getDataValue("toss_billing_key")}`,
-        headers: {
-            "Authorization": `Basic ${Buffer.from(process.env.TOSS_SECRET_KEY + ":", "utf-8").toString("base64")}`,
-            "Content-type": "application/json"
-        },
-        data: {
-            customerKey: paymentOfUser.getDataValue("user_id"),
-            amount: targetMenu.getDataValue("price"),
-            orderId: v4(),
-            orderName: targetMenu.getDataValue("label"),
+        if (!menuId) {
+            return res.status(400).json({ message: "상품이 지정되지 않았습니다." })
         }
-    })
-        .then((response) => {
-            const {
-                paymentKey,
-                orderId,
-                orderName,
-                status,
-                requestedAt,
-                approvedAt,
-                totalAmount,
-                suppliedAmount,
-                vat,
-                method,
-            } = response.data
-            const orderCreation = Order.create({
-                id: orderId,
-                user_id: req.session.kiosk.user_id,
-                store_id: req.session.kiosk.store_id,
-                paymentKey,
-                order_name: orderName,
-                method,
-                totalAmount,
-                suppliedAmount,
-                vat,
-                status,
-                requestedAt,
-                approvedAt,
 
+        if (!paymentId) {
+            return res.status(400).json({ message: "결제수단이 지정되지 않았습니다." })
+        }
+
+        const targetMenu = await Menu.findOne({ where: { id: menuId, store_id: req.session.kiosk.store_id } })
+
+        if (!targetMenu) {
+            return res.status(404).json({
+                message: "상품을 찾을 수 없습니다."
             })
-            const getStore = Store.findOne({
-                where: {
-                    id: req.session.kiosk.store_id
-                }
+        }
+
+        const paymentOfUser = await Payment.findOne({ where: { id: paymentId, user_id: req.session.kiosk.user_id } })
+
+        if (!paymentOfUser) {
+            return res.status(404).json({
+                message: "결제수단을 찾을 수 없습니다."
             })
+        }
 
-            return Promise.all([orderCreation, getStore])
-        })
-        .then((result) => {
-            const [order, store] = result;
-
-            const hidedOrderInfo = {
-                order_name: order.get("order_name"),
-                totalAmount: order.get("totalAmount"),
-                method: order.get("method"),
-                vat: order.get("vat"),
-                store: store,
-                approvedAt: order.get("approvedAt"),
+        const response = await axios({
+            method: "POST",
+            url: `https://api.tosspayments.com/v1/billing/${paymentOfUser.get("toss_billing_key")}`,
+            headers: {
+                "Authorization": `Basic ${Buffer.from(process.env.TOSS_SECRET_KEY + ":", "utf-8").toString("base64")}`,
+                "Content-type": "application/json"
+            },
+            data: {
+                customerKey: paymentOfUser.getDataValue("user_id"),
+                amount: targetMenu.getDataValue("price"),
+                orderId: v4(),
+                orderName: targetMenu.getDataValue("label"),
             }
-            res.status(200).json({
-                code: 200,
-                data: hidedOrderInfo
-            })
         })
-        .catch(err => {
-            console.log("error : ", err)
-            throw err
+
+        if (response.status != 200) {
+            throw new Error("toss 결제가 실패")
+        }
+
+        const createdOrder = await Order.create({
+            ...response.data,
+            id: response.data.paymentKey,
+            user_id: req.session.kiosk.user_id,
+            store_id: req.session.kiosk.store_id,
+        });
+
+        return res.status(201).json({
+            data: createdOrder,
+            message: "결제가 정상적으로 완료되었습니다."
         })
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
+    }
+
+
 }

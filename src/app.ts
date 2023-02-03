@@ -101,7 +101,7 @@ app.use("/api/buser/stores/:storeId/sin", sinRouter)
 //--------------------------------------
 app.use("/api/kiosk", checkStoreAgent)
 app.use("/api/kiosk", checkUserAgent)
-app.use("/api/kiosk/order", orderRouter)
+app.use("/api/kiosk/orders", orderRouter)
 
 app.use("/kiosk", checkStoreAgent)
 app.use("/kiosk", checkUserAgent)
