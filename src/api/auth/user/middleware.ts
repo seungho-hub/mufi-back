@@ -2,37 +2,20 @@ import { Request, Response, NextFunction } from "express"
 import { unless } from "express-unless"
 import User from "../../models/User"
 
-export function userAuthenticated(req: Request, res: Response, next: NextFunction) {
-    //authenticated
-    //user정보에대한 session data를 가지고있음.
-    if (req.session && req.session.user) {
-        User.findOne({
-            where: {
-                id: req.session.user.id
+export const userAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (req.session?.user?.id) {
+            if (await User.findOne({ where: { id: req.session.user.id } })) {
+                return next()
             }
+        }
+
+        return res.redirect("/auth/user/signin")
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
-            //session data의 user정보로 user를 찾을 수 있음.
-            .then((user) => {
-                if (user) {
-                    next()
-                } else {
-                    res.redirect("/auth/user/signin")
-                }
-            })
-            .catch(err => {
-                res.status(500).json({
-                    code: 500,
-                    message: "알 수 없는 에러가 발생했습니다."
-                })
-            })
-        return
-    }
-    //not authenticated redirect to signin page
-    else {
-        res.redirect("/auth/user/signin")
-        return
     }
 }
 
-//for except authentication router
-userAuthenticated.unless = unless
+userAuthMiddleware.unless = unless

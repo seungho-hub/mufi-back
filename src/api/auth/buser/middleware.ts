@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express"
 import { unless } from "express-unless"
 import BUser from "../../models/BUser"
 
-export const bUserAuthenticationMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const bUserAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
         //client가 session을 소유한 상태
         if (req.session?.buser?.id) {
@@ -23,4 +23,4 @@ export const bUserAuthenticationMiddleware = async (req: Request, res: Response,
 }
 
 //for except authentication router
-bUserAuthenticationMiddleware.unless = unless
+bUserAuthMiddleware.unless = unless

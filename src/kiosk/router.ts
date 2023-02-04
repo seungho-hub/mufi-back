@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { renderHome } from "./index"
 
-export const kioskRouter = Router()
+export const kioskPageRouter = Router()
 
-kioskRouter.get("/", renderHome)
+kioskPageRouter.get("/", renderHome)
 

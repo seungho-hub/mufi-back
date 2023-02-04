@@ -1,17 +1,17 @@
 import { Router } from "express"
 import { renderSignin, renderSignup, signin, signup, signout, deleteBUser } from "./controller"
-import { bUserAuthenticationMiddleware } from "./middleware"
+import { bUserAuthMiddleware } from "./middleware"
 //"/auth/buser/"
-export const authBUser = Router()
+export const bUserAuthRouter = Router()
 
-authBUser.get("/signin", renderSignin)
+bUserAuthRouter.get("/signin", renderSignin)
 
-authBUser.post("/signin", signin)
+bUserAuthRouter.post("/signin", signin)
 
-authBUser.get("/signup", renderSignup)
+bUserAuthRouter.get("/signup", renderSignup)
 
-authBUser.post("/signup", signup)
+bUserAuthRouter.post("/signup", signup)
 
-authBUser.delete('/signout', signout)
+bUserAuthRouter.delete('/signout', signout)
 
-authBUser.delete("/", bUserAuthenticationMiddleware, deleteBUser)
+bUserAuthRouter.delete("/", bUserAuthMiddleware, deleteBUser)

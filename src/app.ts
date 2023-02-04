@@ -1,37 +1,13 @@
 import express from "express"
 import fileupload from "express-fileupload"
 import morgan from "morgan"
-import { accessLoggerConfig, errorLoggerConfig, customTokenConfig } from "./api/config/Logger"
-import fs from "fs"
-//import routers
-
-//user router
-import { authUser } from "./api/auth/user/route"
-
-//buser router
-import { menuRouter } from "./api/buser/routes/menu"
-import { buserRouter } from "./api/buser/routes/buser"
-import { authBUser } from "./api/auth/buser/route"
-import { bUserRouter } from "./buser/router"
-import { storeRouter } from "./api/buser/routes/store"
-import { kioskRouter } from "./kiosk/router"
-import { kioskAuthRouter } from "./api/auth/kiosk/route"
-import { orderRouter } from "./api/kiosk/routes/order"
-import { kioskPaymentRouter } from "./api/kiosk/routes/payment"
-import { sinRouter } from "./api/buser/routes/sin"
-import { userHomeRouter } from "./user/router"
-import { uinRouter } from "./api/user/routes/uin"
-import { PaymentRouter } from "./api/user/routes/payment"
-import { tossRouter } from "./api/user/routes/toss"
-
 import path from "path"
-import session from "express-session"
+
 import dbConfig from "./api/config/DBConfig"
 import createSessionConfig from "./api/config/SessionConfig"
+import session from "express-session"
 const MySQLStore = require("express-mysql-session")(session)
-import { bUserAuthenticationMiddleware } from "./api/auth/buser/middleware"
-import { userAuthenticated } from "./api/auth/user/middleware"
-import { checkStoreAgent, checkUserAgent } from "./api/auth/kiosk/middleware"
+import { accessLoggerConfig, errorLoggerConfig, customTokenConfig } from "./api/config/Logger"
 
 export const app = express()
 
@@ -65,51 +41,93 @@ app.use(express.static(path.join(process.cwd(), "media")))
 app.use(express.urlencoded({ extended: true }))
 
 app.use(fileupload({}))
-const sessionStore = new MySQLStore(dbConfig)
 
+const sessionStore = new MySQLStore(dbConfig)
 app.use(session(createSessionConfig(sessionStore)))
 
 
-//--------------------------------------
-//user routing
-app.use("/user/", userAuthenticated)
-//for api
-app.use("/api/user", userAuthenticated)
+//**************routing**************/
 
-app.use("/auth/user", authUser)
-app.use("/user", userHomeRouter)
+//import buser router
+import { bUserAuthRouter } from "./api/auth/buser/route"
+
+import { menuRouter } from "./api/buser/routes/menu"
+import { buserRouter } from "./api/buser/routes/buser"
+import { storeRouter } from "./api/buser/routes/store"
+import { sinRouter } from "./api/buser/routes/sin"
+
+import { bUserPageRouter } from "./buser/router"
+
+import { bUserAuthMiddleware } from "./api/auth/buser/middleware"
+
+//import user router
+import { userAuthRouter } from "./api/auth/user/route"
+import { uinRouter } from "./api/user/routes/uin"
+import { userPaymentRouter } from "./api/user/routes/payment"
+import { tossRouter } from "./api/user/routes/toss"
+
+import { userPageRouter } from "./user/router"
+
+import { userAuthMiddleware } from "./api/auth/user/middleware"
+
+//import kiosk router
+import { kioskAuthorityRouter } from "./api/auth/kiosk/route"
+import { orderRouter } from "./api/kiosk/routes/order"
+import { kioskPaymentRouter } from "./api/kiosk/routes/payment"
+
+import { kioskPageRouter } from "./kiosk/router"
+
+import { checkStoreAuthority, checkUserAuthority } from "./api/auth/kiosk/middleware"
+
+//--------------------------------------user
+//middleware
+app.use("/user/", userAuthMiddleware)
+app.use("/api/user", userAuthMiddleware)
+
+//authentication
+app.use("/auth/user", userAuthRouter)
+
+//api routing
 app.use("/api/user/uin", uinRouter)
-app.use("/api/user/payments", PaymentRouter)
+app.use("/api/user/payments", userPaymentRouter)
 app.use("/api/user/payments/toss", tossRouter)
 
+//page routing
+app.use("/user", userPageRouter)
 
 
-//--------------------------------------
-//buser routing
+//--------------------------------------buser
+//middleware
+app.use("/buser", bUserAuthMiddleware)
+app.use("/api/buser", bUserAuthMiddleware)
 
-//for home
-app.use("/buser", bUserAuthenticationMiddleware)
-//for api
-app.use("/api/buser", bUserAuthenticationMiddleware)
-app.use("/auth/buser", authBUser)
-app.use("/buser", bUserRouter)
+//authentication
+app.use("/auth/buser", bUserAuthRouter)
 
+//api routing
 app.use("/api/buser/", buserRouter)
 app.use("/api/buser/stores", storeRouter)
 app.use("/api/buser/stores/:storeId/menus", menuRouter)
 app.use("/api/buser/stores/:storeId/sin", sinRouter)
 
-//--------------------------------------
-app.use("/api/kiosk", checkStoreAgent)
-app.use("/api/kiosk", checkUserAgent)
+//page routing
+app.use("/buser", bUserPageRouter)
+
+
+//--------------------------------------kiosk
+//middleware
+app.use("/api/kiosk", checkStoreAuthority, checkUserAuthority)
+app.use("/kiosk", checkStoreAuthority, checkUserAuthority)
+
+//authentication
+app.use("/auth/kiosk", kioskAuthorityRouter)
+
+//api routing
 app.use("/api/kiosk/orders", orderRouter)
 app.use("/api/kiosk/payments", kioskPaymentRouter)
 
-app.use("/kiosk", checkStoreAgent)
-app.use("/kiosk", checkUserAgent)
-app.use("/kiosk", kioskRouter)
-
-app.use("/auth/kiosk", kioskAuthRouter)
+//page routing
+app.use("/kiosk", kioskPageRouter)
 
 
 

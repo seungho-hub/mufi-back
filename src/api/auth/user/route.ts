@@ -2,27 +2,26 @@ import { Router } from "express"
 import { oauthSignin, oauthSinginCallback, signout, renderSignin } from './controller/sns';
 import { localSignup, localSignin, deleteUser } from "./controller/local"
 import { requestAgent } from "./controller/agent"
-import { userAuthenticated } from "./middleware";
-//"/auth/user/"
-export const authUser = Router()
 
-authUser.get("/signin", renderSignin)
+export const userAuthRouter = Router()
+//page
+userAuthRouter.get("/signin", renderSignin)
 
 //local 
-authUser.post("/signin", localSignin)
-authUser.post("/signup", localSignup)
+userAuthRouter.post("/signin", localSignin)
+userAuthRouter.post("/signup", localSignup)
 
 //sns
-authUser.get("/signin/:provider", oauthSignin)
-authUser.get("/signin/:provider/callback", oauthSinginCallback)
+userAuthRouter.get("/signin/:provider", oauthSignin)
+userAuthRouter.get("/signin/:provider/callback", oauthSinginCallback)
 
-authUser.delete("/signout", signout)
+userAuthRouter.delete("/signout", signout)
 
 //delete user
-authUser.delete("/", userAuthenticated, deleteUser)
+userAuthRouter.delete("/", deleteUser)
 
 //agent
-authUser.put("/agent", userAuthenticated, requestAgent)
+userAuthRouter.put("/agent", requestAgent)
 
 
 
