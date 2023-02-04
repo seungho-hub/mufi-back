@@ -17,10 +17,11 @@ import { storeRouter } from "./api/buser/routes/store"
 import { kioskRouter } from "./kiosk/router"
 import { kioskAuthRouter } from "./api/auth/kiosk/route"
 import { orderRouter } from "./api/kiosk/routes/order"
+import { kioskPaymentRouter } from "./api/kiosk/routes/payment"
 import { sinRouter } from "./api/buser/routes/sin"
 import { userHomeRouter } from "./user/router"
 import { uinRouter } from "./api/user/routes/uin"
-import { PaymentRouter } from "./api/user/routes/Payment"
+import { PaymentRouter } from "./api/user/routes/payment"
 import { tossRouter } from "./api/user/routes/toss"
 
 import path from "path"
@@ -102,6 +103,7 @@ app.use("/api/buser/stores/:storeId/sin", sinRouter)
 app.use("/api/kiosk", checkStoreAgent)
 app.use("/api/kiosk", checkUserAgent)
 app.use("/api/kiosk/orders", orderRouter)
+app.use("/api/kiosk/payments", kioskPaymentRouter)
 
 app.use("/kiosk", checkStoreAgent)
 app.use("/kiosk", checkUserAgent)
