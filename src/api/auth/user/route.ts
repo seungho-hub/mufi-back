@@ -2,6 +2,7 @@ import { Router } from "express"
 import { oauthSignin, oauthSinginCallback, signout, renderSignin } from './controller/sns';
 import { localSignup, localSignin, deleteUser } from "./controller/local"
 import { requestAgent } from "./controller/agent"
+import { userAuthMiddleware } from "./middleware";
 
 export const userAuthRouter = Router()
 //page
@@ -21,7 +22,7 @@ userAuthRouter.delete("/signout", signout)
 userAuthRouter.delete("/", deleteUser)
 
 //agent
-userAuthRouter.put("/agent", requestAgent)
+userAuthRouter.put("/agent", userAuthMiddleware, requestAgent)
 
 
 
