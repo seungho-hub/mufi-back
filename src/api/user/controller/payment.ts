@@ -53,11 +53,12 @@ export const getPayments = async (req: Request, res: Response) => {
 }
 
 export const deletePayment = async (req: Request, res: Response) => {
-    const targetPaymentId = req.params.id
-
     try {
-        await Payment.destroy({ where: { id: targetPaymentId } })
-
+        if(!await Payment.destroy({where : {id : req.params.paymentId}})){
+            return res.status(404).json({
+                message : "결제수단을 찾을 수 없습니다."
+            })
+        }
         return res.status(204).end()
     } catch (err) {
         return res.status(500).json({
