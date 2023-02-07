@@ -4,7 +4,7 @@ import bcrypt from "bcrypt"
 import { Request, Response } from "express"
 import { ValidationError } from "sequelize"
 import { generatePin } from "../../../lib/generator/pin"
-import aligoAPI from "../../config/aligo"
+import aligoAPI from "../../../lib/externalAPI/aligo"
 import OtpCache, {VerifyInfo} from "../../../lib/cache/otpCache"
 
 export const renderSignin = async (req: Request, res: Response) => {

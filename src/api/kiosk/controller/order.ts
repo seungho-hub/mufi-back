@@ -2,7 +2,7 @@ import { Request, Response } from "express"
 import Menu from "../../../api/models/Menu"
 import Payment from "../../../api/models/Payment"
 import Order from "../../../api/models/Order"
-import tossAPI from "../../../lib/API/toss"
+import tossAPI from "../../../lib/externalAPI/toss"
 
 export const order = async (req: Request, res: Response) => {
     try {
