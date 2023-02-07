@@ -4,19 +4,8 @@ import bcrypt from "bcrypt"
 import { Request, Response } from "express"
 import { ValidationError } from "sequelize"
 import { generatePin } from "../../../lib/generator/pin"
-import nodeCache from "node-cache"
 import aligoAPI from "../../config/aligo"
-
-const mufiCache = new nodeCache({
-    stdTTL: 60 * 3,
-    checkperiod: 600,
-})
-
-type VerifyInfo = {
-    otp: string,
-    verified: boolean,
-    count: number,
-}
+import OtpCache, {VerifyInfo} from "../../../lib/cache/otpCache"
 
 export const renderSignin = async (req: Request, res: Response) => {
     return res.render("buser/auth/signin")
@@ -94,7 +83,7 @@ export const signup = async (req: Request, res: Response) => {
             })
         }
 
-        const verifInfo: VerifyInfo = mufiCache.get(tel)
+        const verifInfo: VerifyInfo = OtpCache.get(tel)
 
         if (!verifInfo?.verified) {
             return res.status(400).json({
@@ -191,11 +180,11 @@ export const sendOTP = async (req: Request, res: Response) => {
 
         const otp = generatePin(6)
 
-        if (!mufiCache.set(tel, { otp, verified: false })) {
+        if (!OtpCache.set(tel, { otp, verified: false })) {
             throw new Error("cache값 설정중 문제가 발생했습니다.")
         }
 
-        setInterval(() => { mufiCache.del(tel) }, 180000)
+        setInterval(() => { OtpCache.del(tel) }, 180000)
 
 
         const response = await aligoAPI.send(`[${otp}] 알리고 인증번호입니다.`, tel)
@@ -230,7 +219,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
             })
         }
 
-        const verifInfo:VerifyInfo = mufiCache.get(tel)
+        const verifInfo: VerifyInfo = OtpCache.get(tel)
 
         if (!verifInfo) {
             return res.status(404).json({
@@ -252,7 +241,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
 
         verifInfo.verified = true
 
-        mufiCache.set(tel, verifInfo)
+        OtpCache.set(tel, verifInfo)
 
         return res.status(200).json({
             message: "인증이 완료되었습니다."
