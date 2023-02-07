@@ -1,9 +1,8 @@
 import { Request, Response } from "express"
 import Menu from "../../../api/models/Menu"
 import Payment from "../../../api/models/Payment"
-import { v4 } from "uuid"
 import Order from "../../../api/models/Order"
-import axios from "axios"
+import tossAPI from "../../../lib/API/toss"
 
 export const order = async (req: Request, res: Response) => {
     try {
@@ -33,19 +32,13 @@ export const order = async (req: Request, res: Response) => {
             })
         }
 
-        const response = await axios({
-            method: "POST",
-            url: `https://api.tosspayments.com/v1/billing/${paymentOfUser.get("toss_billing_key")}`,
-            headers: {
-                "Authorization": `Basic ${Buffer.from(process.env.TOSS_SECRET_KEY + ":", "utf-8").toString("base64")}`,
-                "Content-type": "application/json"
-            },
-            data: {
-                customerKey: paymentOfUser.getDataValue("user_id"),
-                amount: targetMenu.getDataValue("price"),
-                orderId: v4(),
-                orderName: targetMenu.getDataValue("label"),
-            }
+        const billingKey = paymentOfUser.get("toss_billing_key") as string
+
+        const response = await tossAPI.order({
+            billingKey, 
+            customerKey: paymentOfUser.getDataValue("user_id"),
+            amount: targetMenu.getDataValue("price"),
+            orderName: targetMenu.getDataValue("label"),
         })
 
         if (response.status != 200) {
