@@ -55,6 +55,7 @@ import { menuRouter } from "./api/buser/routes/menu"
 import { buserRouter } from "./api/buser/routes/buser"
 import { storeRouter } from "./api/buser/routes/store"
 import { sinRouter } from "./api/buser/routes/sin"
+import { buserOrderRouter } from './api/buser/routes/order';
 
 import { bUserPageRouter } from "./buser/router"
 
@@ -110,6 +111,7 @@ app.use("/api/buser/", buserRouter)
 app.use("/api/buser/stores", storeRouter)
 app.use("/api/buser/stores/:storeId/menus", menuRouter)
 app.use("/api/buser/stores/:storeId/sin", sinRouter)
+app.use("/api/buser/stores/:storeId/orders", buserOrderRouter)
 
 //page routing
 app.use("/buser", bUserPageRouter)
