@@ -66,6 +66,7 @@ import { userAuthRouter } from "./api/auth/user/route"
 import { uinRouter } from "./api/user/routes/uin"
 import { userPaymentRouter } from "./api/user/routes/payment"
 import { tossRouter } from "./api/user/routes/toss"
+import { userOrderRouter } from "./api/user/routes/order"
 
 import { userPageRouter } from "./user/router"
 
@@ -93,6 +94,7 @@ app.use("/auth/user", userAuthRouter)
 app.use("/api/user/uin", uinRouter)
 app.use("/api/user/payments", userPaymentRouter)
 app.use("/api/user/payments/toss", tossRouter)
+app.use("/api/user/orders", userOrderRouter)
 
 //page routing
 app.use("/user", userPageRouter)
