@@ -32,12 +32,6 @@ export const getsPayment = async (req: Request, res: Response) => {
             attributes: { exclude: ["toss_billing_key", "user_id", "createdAt"] }
         })
 
-        if (!payments.length) {
-            return res.status(404).json({
-                message: "결제수단을 찾을 수 없습니다."
-            })
-        }
-
         return res.status(200).json({
             data: payments,
             message: "OK"

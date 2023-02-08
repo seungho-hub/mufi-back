@@ -33,13 +33,6 @@ export const getPayments = async (req: Request, res: Response) => {
             attributes: { exclude: ["toss_billing_key", "createdAt", "user_id"] }
         })
 
-        if (!payments.length) {
-            return res.status(204).json({
-                data: payments,
-                message: "OK"
-            })
-        }
-
         return res.status(200).json({
             data: payments,
             message: "OK"
@@ -54,9 +47,9 @@ export const getPayments = async (req: Request, res: Response) => {
 
 export const deletePayment = async (req: Request, res: Response) => {
     try {
-        if(!await Payment.destroy({where : {id : req.params.paymentId}})){
+        if (!await Payment.destroy({ where: { id: req.params.paymentId } })) {
             return res.status(404).json({
-                message : "결제수단을 찾을 수 없습니다."
+                message: "결제수단을 찾을 수 없습니다."
             })
         }
         return res.status(204).end()

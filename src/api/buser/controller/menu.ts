@@ -127,10 +127,6 @@ export async function getMenus(req: Request, res: Response) {
             }
         },)
 
-        if (!menus.length) {
-            return res.status(204).end()
-        }
-
         return res.status(200).json({
             data: menus,
             message: "OK"

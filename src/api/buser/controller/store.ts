@@ -115,38 +115,36 @@ export async function getStore(req: Request, res: Response) {
         })
 
     } catch (err) {
-        res.status(500).json({
-            error: "server error",
+        return res.status(500).json({
             message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }
-    return
 }
 
 export async function getStores(req: Request, res: Response) {
-    const stores = await Store.findAll({
-        where: {
-            buser_id: req.session.buser.id,
-            //Mufi에서 승인만 나고 등록되지 않은 store는 제외한다.
-            updatedAt: {
-                [Op.ne]: null,
+    try {
+        const stores = await Store.findAll({
+            where: {
+                buser_id: req.session.buser.id,
+                //Mufi에서 승인만 나고 등록되지 않은 store는 제외한다.
+                updatedAt: {
+                    [Op.ne]: null,
+                }
+            },
+            attributes: {
+                exclude: ["code", "buser_id", "createdAt", "updatedAt"]
             }
-        },
-        attributes: {
-            exclude: ["code", "buser_id", "createdAt", "updatedAt"]
-        }
-    })
+        })
 
-    if (!stores.length) {
-        return res.status(404).json({
-            error: "Not Found",
-            message: "매장이 존재하지 않습니다."
+        return res.status(200).json({
+            data: stores,
+            message: "OK"
+        })
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }
-
-    return res.status(200).json({
-        data: stores
-    })
 }
 
 export async function updateStore(req: Request, res: Response) {
