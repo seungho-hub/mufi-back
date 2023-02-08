@@ -73,6 +73,7 @@ import { userAuthMiddleware } from "./api/auth/user/middleware"
 //import kiosk router
 import { kioskAuthorityRouter } from "./api/auth/kiosk/route"
 import { orderRouter } from "./api/kiosk/routes/order"
+import { kioskMenuRouter } from "./api/kiosk/routes/menu"
 import { kioskPaymentRouter } from "./api/kiosk/routes/payment"
 
 import { kioskPageRouter } from "./kiosk/router"
@@ -123,6 +124,7 @@ app.use("/kiosk", checkStoreAuthority, checkUserAuthority)
 app.use("/auth/kiosk", kioskAuthorityRouter)
 
 //api routing
+app.use("/api/kiosk/menus", kioskMenuRouter)
 app.use("/api/kiosk/orders", orderRouter)
 app.use("/api/kiosk/payments", kioskPaymentRouter)
 
