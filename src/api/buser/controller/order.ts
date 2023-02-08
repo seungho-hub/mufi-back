@@ -2,49 +2,42 @@ import { Request, Response } from "express"
 import Order from "../../models/Order"
 
 export async function getOrder(req: Request, res: Response) {
+    try {
+        const orderId = req.params.orderId
+        const storeId = req.app.locals.storeId
 
-    const targetOrderId = req.query.order_id
-    const targetStoreId = req.query.store_id
+        const order = await Order.findOne({ where: { store_id: storeId, id: orderId } })
 
-    // store_id만 지정되고, order_id는 지정되지 않은 경우
-    // target store의 모든 order 기록을 가져온다.
-    if (targetOrderId) {
-        const orders = Order.findOne({
-            where: {
-                store_id: targetStoreId
-            }
-        })
-
-        if (orders == null) {
-            res.status(404).json({
-                code: 404,
-                message: "해당 store에 기록된"
+        if (!order) {
+            return res.status(404).json({
+                message: "내역을 찾을 수 없습니다."
             })
         }
 
+        return res.status(200).json({
+            data: order,
+            message: "OK",
+        })
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
+        })
     }
-    // store_id, order_id가 모두 지정된경우
-    // target store의 target order를 가져온다.
-    else {
-        const targetOrder = Order.findAll({
-            where: {
-                id: targetOrderId,
-                store_id: targetStoreId,
-            }
+}
+
+export async function getOrders(req: Request, res: Response) {
+    try {
+        const storeId = req.app.locals.storeId
+
+        const orders = await Order.findAll({ where: { store_id: storeId } })
+
+        return res.status(200).json({
+            data: orders,
+            message: "OK"
         })
-
-        if (targetOrder == null) {
-            res.status(404).json({
-                code: 404,
-                message: "해당 id와 일치하는 주문내역을 찾을 수 없습니다."
-            })
-
-            return
-        }
-
-        res.status(200).json({
-            code: 200,
-            data: targetOrder,
+    } catch (err) {
+        return res.status(500).json({
+            message: "서버에서 문제가 발생했습니다, 잠시후에 시도해주세요."
         })
     }
 }
