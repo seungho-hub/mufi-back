@@ -1,18 +1,11 @@
 import { sequelize } from "./index"
-import { DataTypes, NOW } from "sequelize";
-import Store from "./Store"
-import Menus from "./Menu"
+import { DataTypes } from "sequelize";
 import Photo from "./Photo"
 
 const Order = sequelize.define("order", {
     id: {
-        type: DataTypes.STRING(64),
-        primaryKey: true,
-    },
-    paymentKey: {
         type: DataTypes.STRING(200),
-        unique: true,
-        allowNull: false,
+        primaryKey: true,
     },
     orderName: {
         type: DataTypes.STRING(100),

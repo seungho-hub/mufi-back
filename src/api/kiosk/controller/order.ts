@@ -53,7 +53,6 @@ export const order = async (req: Request, res: Response) => {
         });
 
         const publicOrderInfo = createdOrder.toJSON()
-        delete publicOrderInfo.id
         delete publicOrderInfo.user_id
         delete publicOrderInfo.store_id
         delete publicOrderInfo.requestedAt
